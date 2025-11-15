@@ -1,10 +1,9 @@
-import Image from "next/image";
-import styles from "./page.module.css";
 
 export default function Home() {
   return (
-    <h1 className="text-3xl font-bold underline">
-      Hikaya App
-    </h1>
+    <div className="h-16 container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">Landing Page</h1>
+
+    </div>
   );
 }
