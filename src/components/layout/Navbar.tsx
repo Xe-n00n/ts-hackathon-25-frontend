@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
     Sheet,
@@ -9,19 +11,22 @@ import {
 
 import { Menu } from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/lib/AuthContext";
 
 export default function Navbar() {
+    const { user, logout, isAuthenticated } = useAuth();
+
     return (
         <nav className="w-full border-b bg-white shadow-sm">
-            <div className="flex items-center justify-around h-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+            <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
 
                 {/* Logo */}
                 <Link href="/" className="text-2xl font-bold tracking-tight text-teal-400">
                     Hikaya
                 </Link>
 
-                {/* Desktop Menu */}
-                <div className="hidden md:flex gap-6 items-center">
+                {/* Desktop Menu - Centered */}
+                <div className="hidden md:flex gap-6 items-center absolute left-1/2 transform -translate-x-1/2">
                     <Link
                         href="/"
                         className="text-sm hover:text-blue-600 transition-colors"
@@ -42,6 +47,32 @@ export default function Navbar() {
                     </Link>
                 </div>
 
+                {/* Auth Buttons - Right aligned */}
+                <div className="hidden md:flex gap-10 items-center">
+                    {!isAuthenticated ? (
+                        <>
+                            <Link href="/login">
+                                <Button size="sm">
+                                    Sign In
+                                </Button>
+                            </Link>
+                            <Link href="/signup">
+                                <Button size="sm">
+                                    Sign Up
+                                </Button>
+                            </Link>
+                        </>
+                    ) : (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={logout}
+                        >
+                            Sign Out
+                        </Button>
+                    )}
+                </div>
+
                 {/* Mobile Menu */}
                 <Sheet>
                     <SheetTrigger asChild>
@@ -56,6 +87,19 @@ export default function Navbar() {
                             <Link href="/">Home</Link>
                             <Link href="/generate">Generate</Link>
                             <Link href="/about">About</Link>
+                            {!isAuthenticated ? (
+                                <>
+                                    <Link href="/login">Sign In</Link>
+                                    <Link href="/signup">Sign Up</Link>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={logout}
+                                    className="text-left w-full hover:bg-gray-50 p-2 rounded"
+                                >
+                                    Sign Out
+                                </button>
+                            )}
                         </div>
                     </SheetContent>
                 </Sheet>
