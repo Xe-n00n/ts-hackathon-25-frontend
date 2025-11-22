@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Hikaya",
   description: "Stories by you, for you.",
+  icons: {
+    icon: '/Main Logo.svg',
+  },
 };
 
 export default function RootLayout({
@@ -26,10 +29,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} `}>
         <AuthProvider>
-          <Navbar />
-          {children}
+          <div className="flex">
+            <Navbar />
+            <main className="flex-1 p-4">
+              {children}
+            </main>
+          </div>
         </AuthProvider>
       </body>
     </html>
