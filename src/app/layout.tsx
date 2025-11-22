@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Hikaya",
+  title: "Hikaaya",
   description: "Stories by you, for you.",
   icons: {
     icon: '/Main Logo.svg',

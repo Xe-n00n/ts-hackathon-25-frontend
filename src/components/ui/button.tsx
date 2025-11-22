@@ -8,19 +8,32 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: `w-3xs h-14
+        default: `w-3xs h-16
           rounded-[55px]
-          font-semibold text-xl
+          font-semibold text-2xl
           bg-light-orange text-background
           px-2 py-4
           hover:bg-dark-red hover:shadow-lg hover:scale-[1.02]`,
         outline:
-          `w-2xs h-16
+          `w-2xs h-14
           rounded-[55px]
           font-semibold text-2xl
-          outline outline-light-orange outline-3 bg-background text-light-orange
+          outline outline-light-orange outline-3 bg-white text-light-orange
           px-2 py-4
           hover:shadow-lg hover:scale-[1.02] hover:outline-dark-red hover:text-dark-red`,
+        green: `w-3xs h-14
+          rounded-[55px]
+          font-semibold text-2xl
+          bg-green text-white
+          px-2 py-4
+          hover:bg-green hover:shadow-lg hover:scale-[1.02]`,
+        greenOutline:
+          `w-2xs h-14
+          rounded-[55px]
+          font-semibold text-2xl
+          outline outline-green outline-3 bg-white text-green
+          px-2 py-4
+          hover:shadow-lg hover:scale-[1.02] hover:outline-green`,
       },
       size: {
         default: "",

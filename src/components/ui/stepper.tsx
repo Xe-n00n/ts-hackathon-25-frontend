@@ -1,28 +1,30 @@
-export function Stepper({ steps }: {
-    steps: number;
-}) {
+import React from "react";
+
+export function Stepper({ steps = 5, colors = [] }) {
     return (
-        <div className="relative w-full flex items-center justify-between py-6 mx-auto">
-
-            {/* Background Line */}
-            <div className="absolute left-0 right-0 top-1/2 h-[2px] bg-[#464540] translate-y-[-50%]" />
-
-            {/* Steps */}
-            {Array.from({ length: steps }).map((_, i) => {
-                const step = i + 1;
-                return (
+        <div className="relative w-full flex items-center py-8">
+            {Array.from({ length: steps }).map((_, i) => (
+                <React.Fragment key={i}>
+                    {/* Step circle */}
                     <div
-                        key={step}
-                        className="
-              relative z-10 flex items-center justify-center
-              h-6 w-6 rounded-full
-              bg-[#464540] text-white text-base
-            "
+                        className="z-10 flex items-center justify-center h-8 w-8 rounded-full text-white text-base font-bold"
+                        style={{
+                            background: colors[i] || "var(--gray)",
+                        }}
                     >
-                        {step}
+                        {i + 1}
                     </div>
-                );
-            })}
+                    {/* Connector line: skip after the last step */}
+                    {i < steps - 1 && (
+                        <div
+                            className="flex-1 h-[2px]"
+                            style={{
+                                background: colors[i] || "var(--gray)",
+                            }}
+                        />
+                    )}
+                </React.Fragment>
+            ))}
         </div>
     );
 }

@@ -54,6 +54,8 @@ body {
   --color-orange: var(--orange);
   --color-purple: var(--purple);
   --color-light-orange: var(--light-orange);
+  --color-gray: var(--gray);
+
 }
 
 :root {
@@ -95,6 +97,7 @@ body {
   --orange: #C97460;
   --purple: #6B5482;
   --light-orange: #CF5C5C;
+  --gray: #464540;
 }
 
 
