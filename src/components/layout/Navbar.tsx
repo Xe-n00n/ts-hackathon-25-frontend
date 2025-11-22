@@ -1,12 +1,12 @@
 "use client";
 import { useState } from "react";
+import { Menu } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu } from "lucide-react";
-import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/AuthContext";
 import { baloo2 } from "@/lib/fonts";
+import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 
 export default function Navbar() {
     const { user, isAuthenticated } = useAuth();
@@ -16,7 +16,7 @@ export default function Navbar() {
         <>
             <nav className="hidden lg:flex h-screen w-64 bg-background border-r border-[#4645406B] shadow-2xl flex flex-col">
                 {/* Logo */}
-                <div className="p-4">
+                <div className="pt-4 px-4">
                     <Link href="/" className="flex items-center gap-2">
                         <Image src="/Main Logo.svg" alt="Hikaya Logo" width={40} height={40} />
                         <Image src="/App Name.svg" alt="Hikaya Title" width={100} height={100} />
@@ -24,7 +24,7 @@ export default function Navbar() {
                 </div>
 
                 {/* Menu Links */}
-                <div className="flex flex-col gap-2 p-4 flex-1 justify-between gap-8">
+                <div className="flex flex-col pt-4 px-4 flex-1 justify-between">
                     <div>
                         <div className="flex items-center pb-2">
                             <Image src="/icons/generate-icon.svg" alt="Generate Icon" width={14} height={14} />
@@ -78,48 +78,24 @@ export default function Navbar() {
                     </div>
                     {/* Auth Buttons - Bottom */}
                     <div>
-                        {!isAuthenticated ? (
-                            <div>
-                                <div className="flex items-center pb-2">
-                                    <Image src="/icons/trash-icon.svg" alt="Trash Icon" width={14} height={14} />
-                                    <Link
-                                        href=""
-                                        className={`text-xl px-2 font-semibold text-secondary ${baloo2.className}`}
-                                    >
-                                        Trash
-                                    </Link>
-                                </div>
-                                <div className="flex items-center pb-2">
-                                    <Image src="/icons/settings-icon.svg" alt="Settings Icon" width={14} height={14} />
-                                    <Link
-                                        href=""
-                                        className={`text-xl px-2 font-semibold text-secondary ${baloo2.className}`}
-                                    >
-                                        Settings
-                                    </Link>
-                                </div>
-                                {/* <Link href="/login">
-                                    <Button size="sm" className="w-full">
-                                        Sign In
-                                    </Button>
-                                </Link>
-                                <Link href="/signup">
-                                    <Button size="sm" variant="outline" className="w-full">
-                                        Sign Up
-                                    </Button>
-                                </Link> */}
-                            </div>
-                        ) : (
-                            <></>
-                            // <Button
-                            //     variant="ghost"
-                            //     size="sm"
-                            //     onClick={logout}
-                            //     className="w-full justify-start"
-                            // >
-                            //     Sign Out
-                            // </Button>
-                        )}
+                        <div className="flex items-center pb-2">
+                            <Image src="/icons/trash-icon.svg" alt="Trash Icon" width={14} height={14} />
+                            <Link
+                                href=""
+                                className={`text-xl px-2 font-semibold text-secondary ${baloo2.className}`}
+                            >
+                                Trash
+                            </Link>
+                        </div>
+                        <div className="flex items-center pb-2">
+                            <Image src="/icons/settings-icon.svg" alt="Settings Icon" width={14} height={14} />
+                            <Link
+                                href=""
+                                className={`text-xl px-2 font-semibold text-secondary ${baloo2.className}`}
+                            >
+                                Settings
+                            </Link>
+                        </div>
                     </div>
                 </div>
 

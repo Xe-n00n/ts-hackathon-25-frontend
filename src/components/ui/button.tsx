@@ -4,21 +4,23 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 export const buttonVariants = cva(
-  "inline-flex items-start justify-center whitespace-nowrap transition-all disabled:pointer-events-none disabled:opacity-50",
+  "inline-flex items-start justify-center whitespace-nowrap transition-all duration-200 ease-in-out disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        default: `w-[298px] h-[68px]
+        default: `w-3xs h-14
           rounded-[55px]
-          font-semibold text-2xl
-          bg-light-orange text-[#FFF9EF]
-          px-2 py-4`,
+          font-semibold text-xl
+          bg-light-orange text-background
+          px-2 py-4
+          hover:bg-dark-red hover:shadow-lg hover:scale-[1.02]`,
         outline:
-          `w-[298px] h-[68px]
+          `w-2xs h-16
           rounded-[55px]
           font-semibold text-2xl
           outline outline-light-orange outline-3 bg-background text-light-orange
-          px-2 py-4`,
+          px-2 py-4
+          hover:shadow-lg hover:scale-[1.02] hover:outline-dark-red hover:text-dark-red`,
       },
       size: {
         default: "",

@@ -15,7 +15,7 @@ export function Stepper({ steps }: {
                         key={step}
                         className="
               relative z-10 flex items-center justify-center
-              h-10 w-10 rounded-full
+              h-6 w-6 rounded-full
               bg-[#464540] text-white text-base
             "
                     >
