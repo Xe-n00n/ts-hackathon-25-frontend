@@ -13,13 +13,13 @@ export default function StoryGenerateButton() {
 
     return (
         <div className="relative inline-block">
-            <Button onClick={handleClick} className={`${baloo2.className}`}>Begin Story Creation</Button>
+            <Button onClick={handleClick} className={`${baloo2.className} w-2xs h-16`}>Begin Story Creation</Button>
             <Image
                 src="/icons/bird-icon.svg"
                 alt="Bird Icon"
                 width={20}
                 height={20}
-                className="absolute -top-8 left-55 -translate-x-1/2 w-[50px] h-auto"
+                className="absolute -top-8 left-60 -translate-x-1/2 w-[50px] h-auto"
             />
         </div>
     );

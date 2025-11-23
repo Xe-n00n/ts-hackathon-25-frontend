@@ -16,9 +16,9 @@ export default function Navbar() {
         <>
             <nav className="hidden lg:flex h-screen w-64 bg-background border-r border-[#4645406B] shadow-2xl flex flex-col">
                 {/* Logo */}
-                <div className="pt-4 px-4">
-                    <Link href="/" className="flex items-center gap-2">
-                        <Image src="/Main Logo.svg" alt="Hikaya Logo" width={40} height={40} />
+                <div className="pt-4 px-4 mb-2">
+                    <Link href="/" className="flex items-center gap-3">
+                        <Image src="/Main Logo.svg" alt="Hikaya Logo" width={40} height={40} className="mb-1" />
                         <Image src="/App Name.svg" alt="Hikaya Title" width={100} height={100} />
                     </Link>
                 </div>

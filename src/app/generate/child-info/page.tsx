@@ -33,7 +33,7 @@ export default function ChildInfo() {
                 <div className="flex flex-col">
                     <Label htmlFor="friends-name" className="font-semibold mb-1">Name of friends</Label>
                     <Input type="text" />
-                    <Label htmlFor="gender" className="font-medium mb-1 text-green text-xs">(must be in this format "Lena, Dania, sarah")</Label>
+                    <Label htmlFor="gender" className="font-medium mt-2 text-green text-xs">(must be in this format "Lena, Dania, sarah")</Label>
                 </div>
                 <div className="flex flex-col">
                     <Label htmlFor="gender" className="font-semibold mb-1">Gender</Label>
