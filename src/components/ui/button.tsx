@@ -60,6 +60,32 @@ export const buttonVariants = cva(
           outline outline-purple outline-3 bg-white text-purple
           px-2 py-4
           hover:shadow-lg hover:scale-[1.02]`,
+        yellow: `w-36 h-12
+          rounded-[55px]
+          font-semibold text-2xl
+          bg-yellow text-white
+          px-2 py-4
+          hover:shadow-lg hover:scale-[1.02]`,
+        yellowOutline:
+          `w-36 h-12
+          rounded-[55px]
+          font-semibold text-2xl
+          outline outline-yellow outline-3 bg-white text-yellow
+          px-2 py-4
+          hover:shadow-lg hover:scale-[1.02]`,
+        darkRed: `w-36 h-12
+          rounded-[55px]
+          font-semibold text-2xl
+          bg-dark-red text-white
+          px-2 py-4
+          hover:shadow-lg hover:scale-[1.02]`,
+        darkRedOutline:
+          `w-36 h-12
+          rounded-[55px]
+          font-semibold text-2xl
+          outline outline-dark-red outline-3 bg-white text-dark-red
+          px-2 py-4
+          hover:shadow-lg hover:scale-[1.02]`,
       },
       size: {
         default: "",

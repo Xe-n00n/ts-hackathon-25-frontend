@@ -7,11 +7,11 @@ export default function CustomDescriptionButtons() {
     const router = useRouter();
 
     const handlePrevious = () => {
-        router.push('/generate/child-info');
+        router.push('/generate/story-style');
     };
 
     const handleNext = () => {
-        router.push('/generate/select-values');
+        router.push('/generate/output-format');
     };
 
     return (

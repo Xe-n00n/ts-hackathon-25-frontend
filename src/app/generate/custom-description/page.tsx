@@ -7,7 +7,7 @@ import CustomDescriptionButtons from "@/components/custom-description-buttons";
 import { TagInput } from "@/components/tag-input";
 
 
-export default function SelectValues() {
+export default function CustomDescription() {
 
     return (
         <div className={`h-screen max-h-screen overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
@@ -29,8 +29,8 @@ export default function SelectValues() {
             </div>
             <div className="flex justify-between items-center ">
                 <Image
-                    src="/icons/rabbit-icon.svg"
-                    alt="Rabbit Icon"
+                    src="/icons/owl-icon.svg"
+                    alt="Owl Icon"
                     width={150}
                     height={150}
                     className="self-center ml-4"

@@ -3,14 +3,13 @@ import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "./ui/button";
 function getColorClasses(color: string) {
-    console.log(`bg-${color}`, `text-${color}`);
     return {
         bg: `bg-${color}`,
         text: `text-${color}`
     };
 }
 
-export function TagInput({ color = "var(--gray)" }: { color?: string }) {
+export function TagInput({ color = "gray" }: { color?: string }) {
     const [tag, setTag] = useState("");
     const [tags, setTags] = useState<string[]>([]);
     const { bg, text } = getColorClasses(color);

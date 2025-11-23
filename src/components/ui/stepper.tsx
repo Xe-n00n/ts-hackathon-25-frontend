@@ -13,8 +13,7 @@ export function Stepper({ steps = 0, colors = [], activeStep = 0 }: StepperProps
                 <React.Fragment key={i}>
                     {/* Step circle */}
                     <div
-                        className={`z-10 flex items-center justify-center h-8 w-8 rounded-full text-white text-base font-bold ${i === activeStep ? 'ring-4 ring-purple-300 ring-opacity-50' : ''
-                            }`}
+                        className={`z-10 flex items-center justify-center h-8 w-8 rounded-full text-white text-base font-bold}`}
                         style={{
                             background: colors[i] || "var(--gray)",
                         }}

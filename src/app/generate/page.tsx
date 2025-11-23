@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { baloo2, quicksand } from "@/lib/fonts";
 import { Stepper } from "@/components/ui/stepper";
-import StoryGenerateButton from "@/components/generate-story-button";
+import StoryGenerateButton from "@/components/generate-story-buttons";
 
 export default function Generate() {
     return (

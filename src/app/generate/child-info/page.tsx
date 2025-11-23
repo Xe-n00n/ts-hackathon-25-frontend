@@ -18,7 +18,7 @@ export default function ChildInfo() {
                 <div className="w-4/5 mx-auto mb-2">
                     <Stepper steps={5} activeStep={1} colors={["var(--green)"]} />
                 </div>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4 w-4/5 mx-auto">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4 w-4/5 mx-auto mt-16">
                     <div className="flex flex-col">
                         <Label htmlFor="child-name" className="font-semibold mb-1">Name of your child</Label>
                         <Input type="text" />

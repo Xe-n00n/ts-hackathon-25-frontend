@@ -7,7 +7,7 @@ export default function ChildInfoButtons() {
     const router = useRouter();
 
     const handlePrevious = () => {
-        router.push('/generate');
+        router.push('/generate/');
     };
 
     const handleNext = () => {
