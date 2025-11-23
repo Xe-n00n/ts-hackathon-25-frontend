@@ -13,7 +13,7 @@ export const buttonVariants = cva(
           font-semibold text-2xl
           bg-light-orange text-background
           px-2 py-4
-          hover:bg-dark-red hover:shadow-lg hover:scale-[1.02]`,
+          hover:shadow-lg hover:scale-[1.02]`,
         outline:
           `w-36 h-12
           rounded-[55px]
@@ -33,20 +33,33 @@ export const buttonVariants = cva(
           font-semibold text-2xl
           outline outline-green outline-3 bg-white text-green
           px-2 py-4
-          hover:shadow-lg hover:scale-[1.02] hover:outline-green`,
+          hover:shadow-lg hover:scale-[1.02]`,
         orange: `w-36 h-12
           rounded-[55px]
           font-semibold text-2xl
           bg-orange text-white
           px-2 py-4
-          hover:bg-orange hover:shadow-lg hover:scale-[1.02]`,
+          hover:shadow-lg hover:scale-[1.02]`,
         orangeOutline:
           `w-36 h-12
           rounded-[55px]
           font-semibold text-2xl
           outline outline-orange outline-3 bg-white text-orange
           px-2 py-4
-          hover:shadow-lg hover:scale-[1.02] hover:outline-orange`,
+          hover:shadow-lg hover:scale-[1.02]`,
+        purple: `w-36 h-12
+          rounded-[55px]
+          font-semibold text-2xl
+          bg-purple text-white
+          px-2 py-4
+          hover:shadow-lg hover:scale-[1.02]`,
+        purpleOutline:
+          `w-36 h-12
+          rounded-[55px]
+          font-semibold text-2xl
+          outline outline-purple outline-3 bg-white text-purple
+          px-2 py-4
+          hover:shadow-lg hover:scale-[1.02]`,
       },
       size: {
         default: "",

@@ -1,12 +1,19 @@
 "use client";
 import { useState } from "react";
-import { Input } from "@/components/ui/input"; // <- your exported input
+import { Input } from "@/components/ui/input";
+import { Button } from "./ui/button";
+function getColorClasses(color: string) {
+    console.log(`bg-${color}`, `text-${color}`);
+    return {
+        bg: `bg-${color}`,
+        text: `text-${color}`
+    };
+}
 
-import { Button } from "@/components/ui/button"; // Existing Button
-
-export function TagInput() {
+export function TagInput({ color = "var(--gray)" }: { color?: string }) {
     const [tag, setTag] = useState("");
     const [tags, setTags] = useState<string[]>([]);
+    const { bg, text } = getColorClasses(color);
 
     const addTag = () => {
         const newTag = tag.trim();
@@ -30,7 +37,7 @@ export function TagInput() {
                 <button
                     type="button"
                     onClick={addTag}
-                    className="rounded-full w-8 h-8 flex items-center justify-center text-orange text-2xl font-bold transition ml-2"
+                    className={`rounded-full w-8 h-8 flex items-center justify-center ${text} text-2xl font-bold transition ml-2`}
                     aria-label="Add tag"
                 >
                     +
@@ -39,9 +46,9 @@ export function TagInput() {
             <div className="flex gap-4 mt-4">
                 {tags.map((t) => (
                     <Button
-                        variant="orange"
-                        size="lg"
                         key={t}
+                        type="button"
+                        className={`rounded-full px-6 py-3 text-xl font-semibold ${bg} text-white`}
                     >
                         {t}
                     </Button>
