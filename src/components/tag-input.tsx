@@ -36,7 +36,7 @@ export function TagInput() {
                     +
                 </button>
             </div>
-            <div className="flex gap-4 mt-8">
+            <div className="flex gap-4 mt-4">
                 {tags.map((t) => (
                     <Button
                         variant="orange"
