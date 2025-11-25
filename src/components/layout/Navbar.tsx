@@ -76,7 +76,15 @@ export default function Navbar() {
                             </Link>
                         </div>
                     </div>
-                    {/* Auth Buttons - Bottom */}
+                    <div>
+                        <div className="flex flex-col items-start space-y-2">
+                            <p className={`text-xl font-semibold text-purple ${baloo2.className}`}>Recent</p>
+                            <p className={`text-base font-medium text-gray ${baloo2.className}`}>Mohamed and turtle</p>
+                            <p className={`text-base font-medium text-gray ${baloo2.className}`}>Houda in wonderland</p>
+                            <p className={`text-base font-medium text-gray ${baloo2.className}`}>Houda in the castle</p>
+                        </div>
+
+                    </div>
                     <div>
                         <div className="flex items-center pb-2">
                             <Image src="/icons/trash-icon.svg" alt="Trash Icon" width={14} height={14} />
@@ -180,7 +188,12 @@ export default function Navbar() {
                                     </Link>
                                 </div>
                             </div>
-                            {/* Auth Buttons - Bottom */}
+                            <div className="flex flex-col items-start space-y-2">
+                                <p className={`text-xl font-semibold text-purple ${baloo2.className}`}>Recent</p>
+                                <p className={`text-base font-medium text-gray ${baloo2.className}`}>Mohamed and turtle</p>
+                                <p className={`text-base font-medium text-gray ${baloo2.className}`}>Houda in wonderland</p>
+                                <p className={`text-base font-medium text-gray ${baloo2.className}`}>Houda in the castle</p>
+                            </div>
                             <div>
                                 {!isAuthenticated ? (
                                     <div>

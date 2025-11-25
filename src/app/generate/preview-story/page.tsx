@@ -135,7 +135,7 @@ export default function PreviewStory() {
     const carouselItems = useMemo(() => {
         return story.map((page, index) => (
             <CarouselItem key={index} className="flex justify-start items-center basis-1/4">
-                <div className={`bg-white rounded-xl p-3 w-64 h-48 flex flex-col justify-between cursor-pointer transition shadow-xl border-2
+                <div className={`bg-white rounded-xl p-3 w-64 h-36 flex flex-col justify-between cursor-pointer transition shadow-xl border-2
                     ${selectedIndex === index ? "border-dark-red" : "border-transparent"}`}
                     onClick={() => handlePageSelect(index)}
                 >
