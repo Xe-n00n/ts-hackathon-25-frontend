@@ -9,15 +9,26 @@ function getColorClasses(color: string) {
     };
 }
 
-export function TagInput({ color = "gray" }: { color?: string }) {
+interface TagInputProps {
+    color?: string;
+    value?: string[];
+    onValueChange?: (tags: string[]) => void;
+}
+
+export function TagInput({ color = "gray", value, onValueChange }: TagInputProps) {
     const [tag, setTag] = useState("");
-    const [tags, setTags] = useState<string[]>([]);
+    const [internalTags, setInternalTags] = useState<string[]>([]);
+
+    const tags = value !== undefined ? value : internalTags;
+    const setTags = onValueChange || setInternalTags;
+
     const { bg, text } = getColorClasses(color);
 
     const addTag = () => {
         const newTag = tag.trim();
         if (newTag === "" || tags.includes(newTag)) return;
-        setTags([...tags, newTag]);
+        const newTags = [...tags, newTag];
+        setTags(newTags);
         setTag("");
     };
 
@@ -42,7 +53,7 @@ export function TagInput({ color = "gray" }: { color?: string }) {
                     +
                 </button>
             </div>
-            <div className="flex gap-4 mt-4">
+            <div className="flex gap-4 mt-4 flex-wrap">
                 {tags.map((t) => (
                     <Button
                         key={t}

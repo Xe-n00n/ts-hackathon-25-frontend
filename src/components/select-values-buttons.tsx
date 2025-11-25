@@ -3,7 +3,11 @@ import { useRouter } from "next/navigation";
 import { baloo2 } from "@/lib/fonts";
 import { Button } from "@/components/ui/button";
 
-export default function SelectValuesButtons() {
+interface SelectValuesButtonsProps {
+    isFormValid?: boolean;
+}
+
+export default function SelectValuesButtons({ isFormValid = true }: SelectValuesButtonsProps) {
     const router = useRouter();
 
     const handlePrevious = () => {
@@ -27,6 +31,7 @@ export default function SelectValuesButtons() {
                 variant="orange"
                 className={`${baloo2.className}`}
                 onClick={handleNext}
+                disabled={!isFormValid}
             >
                 Next
             </Button>

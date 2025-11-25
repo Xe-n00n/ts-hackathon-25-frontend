@@ -3,7 +3,11 @@ import { useRouter } from "next/navigation";
 import { baloo2 } from "@/lib/fonts";
 import { Button } from "@/components/ui/button";
 
-export default function ChildInfoButtons() {
+interface ChildInfoButtonsProps {
+    isFormValid?: boolean;
+}
+
+export default function ChildInfoButtons({ isFormValid = true }: ChildInfoButtonsProps) {
     const router = useRouter();
 
     const handlePrevious = () => {
@@ -27,6 +31,7 @@ export default function ChildInfoButtons() {
                 variant="green"
                 className={`${baloo2.className}`}
                 onClick={handleNext}
+                disabled={!isFormValid}
             >
                 Next
             </Button>

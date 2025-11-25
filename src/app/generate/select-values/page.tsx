@@ -1,3 +1,4 @@
+"use client";
 import { baloo2 } from "@/lib/fonts";
 import Image from "next/image";
 import { Stepper } from "@/components/ui/stepper";
@@ -5,8 +6,41 @@ import { Label } from "@/components/ui/label"
 import SelectValuesButtons from "@/components/select-values-buttons";
 import { TagInput } from "@/components/tag-input";
 import { Textarea } from "@/components/ui/textarea"
+import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import { useState } from "react";
+
+interface ValidationErrors {
+    goal?: string;
+}
 
 export default function SelectValues() {
+    const { storyData, updateStoryValues } = useStoryGeneration();
+    const [errors, setErrors] = useState<ValidationErrors>({});
+
+    const validateGoal = (value: string) => {
+        if (!value.trim()) {
+            setErrors(prev => ({ ...prev, goal: "Story goal is required" }));
+        } else {
+            setErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors.goal;
+                return newErrors;
+            });
+        }
+    };
+
+    const handleGoalChange = (value: string) => {
+        updateStoryValues({ goal: value });
+        validateGoal(value);
+    };
+
+    const handleTagsChange = (tags: string[]) => {
+        updateStoryValues({ tags });
+    };
+
+    const isFormValid = () => {
+        return storyData.storyValues.goal.trim() !== '';
+    };
 
     return (
         <div className={`h-screen max-h-screen overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
@@ -14,18 +48,39 @@ export default function SelectValues() {
                 <span className="text-orange">Step 2: </span>&nbsp;Select Values
             </p>
             <div className="w-4/5 mx-auto mb-2">
-                <Stepper steps={5} activeStep={1} colors={["var(--green)", "var(--orange)"]} />
+                <Stepper steps={5} activeStep={2} colors={["var(--green)", "var(--orange)"]} />
             </div>
             <div className="w-4/5 mx-auto flex-1 space-y-4">
                 <div className="flex flex-col">
-                    <Label htmlFor="story-goal" className="font-semibold mb-2 text-2xl">What is your goal from the story?</Label>
-                    <Textarea className="h-36" />
+                    <Label htmlFor="story-goal" className="font-semibold mb-2 text-2xl">
+                        What is your goal from the story? <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                        className={`h-36 ${errors.goal ? "border-red-500" : ""}`}
+                        value={storyData.storyValues.goal}
+                        onChange={(e) => handleGoalChange(e.target.value)}
+                        placeholder="Describe what you want your child to learn from this story..."
+                    />
+                    {errors.goal && (
+                        <p className="text-red-500 text-sm mt-1">{errors.goal}</p>
+                    )}
                 </div>
                 <div className="flex flex-col">
                     <Label htmlFor="select-values-tags" className="font-semibold mb-2 text-2xl">Tags</Label>
-                    <TagInput color="orange" />
+                    <TagInput
+                        color="orange"
+                        value={storyData.storyValues.tags}
+                        onValueChange={handleTagsChange}
+                    />
                 </div>
             </div>
+
+            <div className="w-4/5 mx-auto mt-4">
+                <p className="text-red-500 text-sm">
+                    <span className="text-red-500">*</span> Required fields
+                </p>
+            </div>
+
             <div className="flex justify-between items-center ">
                 <Image
                     src="/icons/rabbit-icon.svg"
@@ -34,7 +89,7 @@ export default function SelectValues() {
                     height={150}
                     className="self-center ml-4"
                 />
-                <SelectValuesButtons />
+                <SelectValuesButtons isFormValid={isFormValid()} />
             </div>
         </div>
     );

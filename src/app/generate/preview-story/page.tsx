@@ -1,6 +1,8 @@
 "use client";
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect } from "react";
 import { baloo2 } from "@/lib/fonts";
+import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import StoryGenerationLoading from "@/components/StoryGenerationLoading";
 import {
     Carousel,
     CarouselContent,
@@ -14,45 +16,114 @@ interface StoryPage {
     pageNumber: number;
 }
 
-// Move story data outside component
-const DEFAULT_STORY_DATA: StoryPage[] = [
-    {
-        pageContent: "Once upon a time, in a land far, far away, there lived a brave little knight named Leo. Leo was known throughout the kingdom for his courage and kindness. One sunny morning, Leo decided to embark on an adventure to find the legendary Golden Dragon, said to grant wishes to those pure of heart.",
-        pageNumber: 1
-    },
-    {
-        pageContent: "Page 2: As Leo journeyed through enchanted forests and crossed sparkling rivers, he encountered a wise old owl perched on a branch. The owl spoke, 'To find the Golden Dragon, you must first prove your bravery by helping those in need.' Leo nodded eagerly, ready for the challenge.",
-        pageNumber: 2
-    },
-    {
-        pageContent: "Page 3: As Leo journeyed through enchanted forests and crossed sparkling rivers, he encountered a wise old owl perched on a branch. The owl spoke, 'To find the Golden Dragon, you must first prove your bravery by helping those in need.' Leo nodded eagerly, ready for the challenge.",
-        pageNumber: 3
-    },
-    {
-        pageContent: "Page 4: As Leo journeyed through enchanted forests and crossed sparkling rivers, he encountered a wise old owl perched on a branch. The owl spoke, 'To find the Golden Dragon, you must first prove your bravery by helping those in need.' Leo nodded eagerly, ready for the challenge.",
-        pageNumber: 4
-    },
-    {
-        pageContent: "Page 5: As Leo journeyed through enchanted forests and crossed sparkling rivers, he encountered a wise old owl perched on a branch. The owl spoke, 'To find the Golden Dragon, you must first prove your bravery by helping those in need.' Leo nodded eagerly, ready for the challenge.",
-        pageNumber: 5
-    },
-    {
-        pageContent: "Page 6: As Leo journeyed through enchanted forests and crossed sparkling rivers, he encountered a wise old owl perched on a branch. The owl spoke, 'To find the Golden Dragon, you must first prove your bravery by helping those in need.' Leo nodded eagerly, ready for the challenge.",
-        pageNumber: 6
-    }
-];
-
-interface PreviewStoryProps {
-    storyData?: StoryPage[];
+interface GeneratedStory {
+    title: string;
+    content: string;
+    format: string;
 }
 
-export default function PreviewStory({ storyData }: PreviewStoryProps = {}) {
+export default function PreviewStory() {
     const [selectedIndex, setSelectedIndex] = useState(0);
+    const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const { storyData } = useStoryGeneration();
 
-    const story = useMemo(() => storyData || DEFAULT_STORY_DATA, [storyData]);
+    useEffect(() => {
+        // Load the generated story from sessionStorage
+        const loadStoryData = () => {
+            const storyDataString = sessionStorage.getItem('generatedStory');
+            if (storyDataString) {
+                try {
+                    const parsedStory = JSON.parse(storyDataString);
+                    // Use setTimeout to avoid synchronous setState in effect
+                    setTimeout(() => {
+                        setGeneratedStory(parsedStory);
+                        setIsLoading(false);
+                    }, 0);
+                    return;
+                } catch (error) {
+                    console.error('Error parsing story data:', error);
+                }
+            }
+            setIsLoading(false);
+        };
+
+        loadStoryData();
+    }, []);
+
+    const story = useMemo(() => {
+        // First check if there's a generated story from sessionStorage
+        if (generatedStory) {
+            // Split the generated story content into pages
+            const content = generatedStory.content;
+            const sentences = content.split(/[.!?]+/).filter((s: string) => s.trim().length > 0);
+
+            const pages: StoryPage[] = [];
+            const sentencesPerPage = Math.max(1, Math.ceil(sentences.length / 4)); // Roughly 4 pages max
+
+            for (let i = 0; i < sentences.length; i += sentencesPerPage) {
+                const pageContent = sentences.slice(i, i + sentencesPerPage).join('. ') + '.';
+                pages.push({
+                    pageContent: pageContent.trim(),
+                    pageNumber: pages.length + 1
+                });
+            }
+
+            return pages;
+        }
+
+        // Fallback to creating a story object from the context data
+        const storyTitle = storyData.childInfo.name
+            ? `A Story About ${storyData.childInfo.name}`
+            : "Your Magical Story";
+
+        // Generate sample content based on the story data
+        let content = `Welcome to ${storyTitle}! `;
+
+        if (storyData.childInfo.name) {
+            content += `This story is about ${storyData.childInfo.name}`;
+            if (storyData.childInfo.age) {
+                content += `, who is ${storyData.childInfo.age} years old`;
+            }
+            content += ". ";
+        }
+
+        if (storyData.customDescription.personalDescription) {
+            content += `${storyData.customDescription.personalDescription} `;
+        }
+
+        if (storyData.storyValues.goal) {
+            content += `Through this adventure, ${storyData.childInfo.name || 'our hero'} will learn about ${storyData.storyValues.goal}. `;
+        }
+
+        if (storyData.storyStyle.islamicTeaching) {
+            content += "This story incorporates Islamic values and teachings. ";
+        }
+
+        content += "Join us on this wonderful journey filled with adventure, learning, and fun!";
+
+        // Split the content into pages
+        const sentences = content.split(/[.!?]+/).filter((s: string) => s.trim().length > 0);
+
+        const pages: StoryPage[] = [];
+        const sentencesPerPage = Math.max(1, Math.ceil(sentences.length / 4)); // Roughly 4 pages max
+
+        for (let i = 0; i < sentences.length; i += sentencesPerPage) {
+            const pageContent = sentences.slice(i, i + sentencesPerPage).join('. ') + '.';
+            pages.push({
+                pageContent: pageContent.trim(),
+                pageNumber: pages.length + 1
+            });
+        }
+
+        return pages.length > 0 ? pages : [{
+            pageContent: "Loading story...",
+            pageNumber: 1
+        }];
+    }, [generatedStory, storyData]);
 
     const currentPage = useMemo(() => {
-        if (!story || story.length === 0) return { pageContent: '', pageNumber: 0 };
+        if (!story || story.length === 0) return { pageContent: 'Loading story...', pageNumber: 1 };
         const safeIndex = Math.max(0, Math.min(selectedIndex, story.length - 1));
         return story[safeIndex];
     }, [story, selectedIndex]);
@@ -81,6 +152,14 @@ export default function PreviewStory({ storyData }: PreviewStoryProps = {}) {
         ));
     }, [story, selectedIndex, handlePageSelect]);
 
+    const storyTitle = generatedStory?.title || (storyData.childInfo.name
+        ? `A Story About ${storyData.childInfo.name}`
+        : "Your Magical Story");
+
+    if (isLoading) {
+        return <StoryGenerationLoading />;
+    }
+
     return (
         <div
             className={`h-screen max-h-screen overflow-hidden container mx-auto flex flex-col ${baloo2.className}`}
@@ -93,7 +172,7 @@ export default function PreviewStory({ storyData }: PreviewStoryProps = {}) {
         >
             <div className="flex flex-col items-center h-full space-y-16">
                 <div className="w-full bg-dark-red py-2 ">
-                    <p className="text-2xl text-white font-semibold ml-6">Title</p>
+                    <p className="text-2xl text-white font-semibold ml-6">{storyTitle}</p>
                 </div>
 
                 <div className="flex flex-col items-center justify-between bg-white w-2/4 mx-auto h-3/4 shadow-xl/20 p-4 rounded-xl text-xl">
