@@ -33,7 +33,7 @@ export function CardSelector({ value, onChange, color = "yellow", options = [], 
                         className="absolute top-0 left-0 opacity-0 pointer-events-none"
                     />
                     <span className="text-2xl" aria-hidden="true">{opt.emoji}</span>
-                    <span className="mt-4 text-lg font-bold">{opt.label}</span>
+                    <span className="mt-4 text-md font-semibold">{opt.label}</span>
                     {selected === opt.value && (
                         <span className="absolute -top-4 -right-4 p-2  opacity-100">
                             {color === "yellow" ? (

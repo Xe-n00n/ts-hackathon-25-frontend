@@ -20,8 +20,8 @@ export default function OutputFormatButtons() {
         router.push('/generate/custom-description');
     };
 
-    const handleNext = () => {
-        router.push('/about');
+    const handleDone = () => {
+        router.push('/generate/preview-story');
     };
 
     return (
@@ -51,7 +51,7 @@ export default function OutputFormatButtons() {
                             <DialogClose asChild>
                                 <Button variant="darkRedOutline">Cancel</Button>
                             </DialogClose>
-                            <Button type="submit" variant="darkRed">Yes</Button>
+                            <Button type="submit" variant="darkRed" onClick={handleDone}>Yes</Button>
                         </DialogFooter>
                     </DialogContent>
                 </form>
