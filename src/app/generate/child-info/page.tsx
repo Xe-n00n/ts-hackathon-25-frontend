@@ -1,14 +1,13 @@
 "use client";
+import { useState } from "react";
 import Image from "next/image";
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input";
 import { Stepper } from "@/components/ui/stepper";
 import { baloo2 } from "@/lib/fonts";
 import { GenderSelect } from "@/components/gender-select";
-import { FileDropzone } from "@/components/file-drop";
 import ChildInfoButtons from "@/components/child-info-buttons";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
-import { useState } from "react";
 
 interface ValidationErrors {
     name?: string;
@@ -17,14 +16,25 @@ interface ValidationErrors {
 }
 
 export default function ChildInfoContent() {
-    const { storyData, updateChildInfo } = useStoryGeneration();
+    const { storyData, updateChildInfo, isLoading, error } = useStoryGeneration();
     const [errors, setErrors] = useState<ValidationErrors>({});
 
     const validateField = (field: string, value: string) => {
         if (field === 'name' && !value.trim()) {
             setErrors(prev => ({ ...prev, name: "Name is required" }));
-        } else if (field === 'age' && !value.trim()) {
-            setErrors(prev => ({ ...prev, age: "Age is required" }));
+        } else if (field === 'age') {
+            if (!value.trim()) {
+                setErrors(prev => ({ ...prev, age: "Age is required" }));
+            } else if (!/^\d+$/.test(value.trim())) {
+                setErrors(prev => ({ ...prev, age: "Age must be a number" }));
+            } else {
+                // Clear age error if valid
+                setErrors(prev => {
+                    const newErrors = { ...prev };
+                    delete newErrors.age;
+                    return newErrors;
+                });
+            }
         } else if (field === 'gender' && !value.trim()) {
             setErrors(prev => ({ ...prev, gender: "Gender is required" }));
         } else {
@@ -38,8 +48,6 @@ export default function ChildInfoContent() {
     };
 
     const handleInputChange = (field: string, value: string) => {
-        console.log('Child Info - Updating field:', field, 'with value:', value);
-        console.log('Current story data:', storyData);
         updateChildInfo({ [field]: value });
 
         // Validate the field if it's a required field
@@ -49,7 +57,6 @@ export default function ChildInfoContent() {
     };
 
     const handleGenderChange = (value: string) => {
-        console.log('Child Info - Gender changed to:', value);
         updateChildInfo({ gender: value });
 
         // Validate gender
@@ -57,10 +64,22 @@ export default function ChildInfoContent() {
     };
 
     const isFormValid = () => {
-        return storyData.childInfo.name.trim() !== '' &&
-            storyData.childInfo.age.trim() !== '' &&
-            storyData.childInfo.gender.trim() !== '';
+        const nameValid = storyData.childInfo.name.trim() !== '';
+        const ageValid = storyData.childInfo.age.trim() !== '' && /^\d+$/.test(storyData.childInfo.age.trim());
+        const genderValid = storyData.childInfo.gender.trim() !== '';
+
+        return nameValid && ageValid && genderValid;
     };
+
+    if (error) {
+        return (
+            <div className="p-8">
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <strong>Error:</strong> {error}
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={`h-screen max-h-screen overflow-hidden container mx-auto pt-4 pb-2 flex flex-col justify-between ${baloo2.className}`}>
@@ -78,9 +97,10 @@ export default function ChildInfoContent() {
                         </Label>
                         <Input
                             type="text"
-                            value={storyData.childInfo.name}
+                            value={storyData.childInfo.name || ""}
                             onChange={(e) => handleInputChange('name', e.target.value)}
                             className={errors.name ? "border-red-500" : ""}
+                            disabled={isLoading}
                         />
                         {errors.name && (
                             <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -90,8 +110,9 @@ export default function ChildInfoContent() {
                         <Label htmlFor="favourite-pet" className="font-semibold mb-1">Favourite Pet</Label>
                         <Input
                             type="text"
-                            value={storyData.childInfo.favouritePet}
+                            value={storyData.childInfo.favouritePet || ""}
                             onChange={(e) => handleInputChange('favouritePet', e.target.value)}
+                            disabled={isLoading}
                         />
                     </div>
                     <div className="flex flex-col">
@@ -100,9 +121,10 @@ export default function ChildInfoContent() {
                         </Label>
                         <Input
                             type="text"
-                            value={storyData.childInfo.age}
+                            value={storyData.childInfo.age || ""}
                             onChange={(e) => handleInputChange('age', e.target.value)}
                             className={errors.age ? "border-red-500" : ""}
+                            disabled={isLoading}
                         />
                         {errors.age && (
                             <p className="text-red-500 text-sm mt-1">{errors.age}</p>
@@ -112,17 +134,20 @@ export default function ChildInfoContent() {
                         <Label htmlFor="friends-name" className="font-semibold mb-1">Name of friends</Label>
                         <Input
                             type="text"
-                            value={storyData.childInfo.friendsName}
+                            value={storyData.childInfo.friendsName || ""}
                             onChange={(e) => handleInputChange('friendsName', e.target.value)}
+                            disabled={isLoading}
                         />
-                        <Label htmlFor="gender" className="font-medium mt-2 text-green text-xs">(must be in this format "Lena, Dania, sarah")</Label>
+                        <Label htmlFor="gender" className="font-medium mt-2 text-green text-xs">
+                            (must be in this format "Lena, Dania, sarah")
+                        </Label>
                     </div>
                     <div className="flex flex-col">
                         <Label htmlFor="gender" className="font-semibold mb-1">
                             Gender <span className="text-red-500">*</span>
                         </Label>
                         <GenderSelect
-                            value={storyData.childInfo.gender}
+                            value={storyData.childInfo.gender || ""}
                             onValueChange={handleGenderChange}
                             className={errors.gender ? "border-red-500" : undefined}
                         />
@@ -130,14 +155,14 @@ export default function ChildInfoContent() {
                             <p className="text-red-500 text-sm mt-1">{errors.gender}</p>
                         )}
                     </div>
-                    <div className="flex flex-col ">
+                    <div className="flex flex-col">
                         <Label htmlFor="child-picture" className="font-semibold mb-1">Describe your Child</Label>
                         <Input
                             type="text"
-                            value={storyData.childInfo.description}
+                            value={storyData.childInfo.description || ""}
                             onChange={(e) => handleInputChange('description', e.target.value)}
+                            disabled={isLoading}
                         />
-                        {/* <FileDropzone /> */}
                     </div>
                 </div>
 
@@ -148,7 +173,7 @@ export default function ChildInfoContent() {
                 </div>
             </div>
 
-            <div className="flex justify-between items-center ">
+            <div className="flex justify-between items-center">
                 <Image
                     src="/icons/dear-icon.svg"
                     alt="Dear Icon"

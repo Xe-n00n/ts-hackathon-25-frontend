@@ -26,9 +26,9 @@ export default function OutputFormatButtons() {
 
     const handleDone = async () => {
         try {
+            setIsStoryLoading(true);
             const start = Date.now();
             const result = await generateStory();
-            setIsStoryLoading(true);
 
             // Enforce a minimum of 3 seconds loading
             const elapsed = Date.now() - start;

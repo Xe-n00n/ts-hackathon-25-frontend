@@ -1,5 +1,5 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 
 export interface ChildInfo {
     name: string;
@@ -97,89 +97,107 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
                 setStoryData(JSON.parse(savedData));
             } catch (error) {
                 console.error('Error loading saved story data:', error);
+                setError('Failed to load saved data');
             }
         }
     }, []);
 
     // Save data to localStorage whenever storyData changes
     useEffect(() => {
-        localStorage.setItem('storyGenerationData', JSON.stringify(storyData));
+        try {
+            localStorage.setItem('storyGenerationData', JSON.stringify(storyData));
+        } catch (error) {
+            console.error('Error saving story data:', error);
+            setError('Failed to save data');
+        }
     }, [storyData]);
 
-    const updateChildInfo = (data: Partial<ChildInfo>) => {
-        setStoryData(prev => ({
-            ...prev,
-            childInfo: { ...prev.childInfo, ...data }
-        }));
-    };
+    // Memoized update functions to prevent unnecessary re-renders
+    const updateChildInfo = useMemo(() => {
+        return (data: Partial<ChildInfo>) => {
+            setStoryData(prev => ({
+                ...prev,
+                childInfo: { ...prev.childInfo, ...data }
+            }));
+        };
+    }, []);
 
-    const updateStoryValues = (data: Partial<StoryValues>) => {
-        setStoryData(prev => ({
-            ...prev,
-            storyValues: { ...prev.storyValues, ...data }
-        }));
-    };
+    const updateStoryValues = useMemo(() => {
+        return (data: Partial<StoryValues>) => {
+            setStoryData(prev => ({
+                ...prev,
+                storyValues: { ...prev.storyValues, ...data }
+            }));
+        };
+    }, []);
 
-    const updateStoryStyle = (data: Partial<StoryStyle>) => {
-        setStoryData(prev => ({
-            ...prev,
-            storyStyle: { ...prev.storyStyle, ...data }
-        }));
-    };
+    const updateStoryStyle = useMemo(() => {
+        return (data: Partial<StoryStyle>) => {
+            setStoryData(prev => ({
+                ...prev,
+                storyStyle: { ...prev.storyStyle, ...data }
+            }));
+        };
+    }, []);
 
-    const updateCustomDescription = (data: Partial<CustomDescription>) => {
-        setStoryData(prev => ({
-            ...prev,
-            customDescription: { ...prev.customDescription, ...data }
-        }));
-    };
+    const updateCustomDescription = useMemo(() => {
+        return (data: Partial<CustomDescription>) => {
+            setStoryData(prev => ({
+                ...prev,
+                customDescription: { ...prev.customDescription, ...data }
+            }));
+        };
+    }, []);
 
-    const updateOutputFormat = (format: StoryData['outputFormat']) => {
-        setStoryData(prev => ({
-            ...prev,
-            outputFormat: format
-        }));
-    };
+    const updateOutputFormat = useMemo(() => {
+        return (format: StoryData['outputFormat']) => {
+            setStoryData(prev => ({
+                ...prev,
+                outputFormat: format
+            }));
+        };
+    }, []);
 
-    const resetStoryData = () => {
-        setStoryData(initialStoryData);
-        localStorage.removeItem('storyGenerationData');
-    };
+    const resetStoryData = useMemo(() => {
+        return () => {
+            setStoryData(initialStoryData);
+            setError(null);
+            localStorage.removeItem('storyGenerationData');
+        };
+    }, []);
 
-    const generateStory = async (): Promise<StoryGenerationResponse> => {
-        setIsLoading(true);
-        setError(null);
+    const generateStory = useMemo(() => {
+        return async (): Promise<StoryGenerationResponse> => {
+            setIsLoading(true);
+            setError(null);
 
-        try {
-            console.log('🚀 Generating story with data:', JSON.stringify(storyData, null, 2));
+            try {
+                console.log('🚀 Generating story with data:', JSON.stringify(storyData, null, 2));
 
-            // const response = await fetch('/api/generate-story', {
-            //     method: 'POST',
-            //     headers: {
-            //         'Content-Type': 'application/json',
-            //     },
-            //     body: JSON.stringify(storyData),
-            // });
+                // Simulate API call
+                await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // if (!response.ok) {
-            //     throw new Error(`HTTP error! status: ${response.status}`);
-            // }
+                return {
+                    success: true,
+                    story: {
+                        title: "Generated Story",
+                        content: "Story content would be here...",
+                        format: storyData.outputFormat
+                    }
+                };
+            } catch (error) {
+                const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+                setError(errorMessage);
+                console.error('❌ Story generation error:', errorMessage);
+                return { success: false, error: errorMessage };
+            } finally {
+                setIsLoading(false);
+            }
+        };
+    }, [storyData]);
 
-            // const result = await response.json();
-            // console.log('✅ Story generation result:', result);
-            // return result;
-            return null as any; // Placeholder to avoid TS error
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-            setError(errorMessage);
-            console.error('❌ Story generation error:', errorMessage);
-            throw error;
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
-    const value: StoryGenerationContextType = {
+    // Memoized context value to prevent unnecessary re-renders
+    const value = useMemo<StoryGenerationContextType>(() => ({
         storyData,
         updateChildInfo,
         updateStoryValues,
@@ -190,7 +208,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         generateStory,
         isLoading,
         error,
-    };
+    }), [storyData, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, resetStoryData, generateStory, isLoading, error]);
 
     return (
         <StoryGenerationContext.Provider value={value}>
