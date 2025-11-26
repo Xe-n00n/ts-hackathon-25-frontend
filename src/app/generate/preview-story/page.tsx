@@ -1,8 +1,7 @@
 "use client";
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { baloo2 } from "@/lib/fonts";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
-import StoryGenerationLoading from "@/components/StoryGenerationLoading";
 import {
     Carousel,
     CarouselContent,
@@ -25,8 +24,9 @@ interface GeneratedStory {
 export default function PreviewStory() {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
-    const { storyData } = useStoryGeneration();
+    const { storyData, resetStoryData } = useStoryGeneration();
+
+
 
     useEffect(() => {
         // Load the generated story from sessionStorage
@@ -35,17 +35,11 @@ export default function PreviewStory() {
             if (storyDataString) {
                 try {
                     const parsedStory = JSON.parse(storyDataString);
-                    // Use setTimeout to avoid synchronous setState in effect
-                    setTimeout(() => {
-                        setGeneratedStory(parsedStory);
-                        setIsLoading(false);
-                    }, 0);
-                    return;
+                    setGeneratedStory(parsedStory);
                 } catch (error) {
                     console.error('Error parsing story data:', error);
                 }
             }
-            setIsLoading(false);
         };
 
         loadStoryData();
@@ -156,10 +150,6 @@ export default function PreviewStory() {
         ? `A Story About ${storyData.childInfo.name}`
         : "Your Magical Story");
 
-    if (isLoading) {
-        return <StoryGenerationLoading />;
-    }
-
     return (
         <div
             className={`h-screen max-h-screen overflow-hidden container mx-auto flex flex-col ${baloo2.className}`}
@@ -171,8 +161,8 @@ export default function PreviewStory() {
             }}
         >
             <div className="flex flex-col items-center h-full space-y-16">
-                <div className="w-full bg-dark-red py-2 ">
-                    <p className="text-2xl text-white font-semibold ml-6">{storyTitle}</p>
+                <div className="w-full bg-dark-red py-2 flex justify-between items-center px-6">
+                    <p className="text-2xl text-white font-semibold">{storyTitle}</p>
                 </div>
 
                 <div className="flex flex-col items-center justify-between bg-white w-2/4 mx-auto h-3/4 shadow-xl/20 p-4 rounded-xl text-xl">

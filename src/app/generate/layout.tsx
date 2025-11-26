@@ -1,4 +1,3 @@
-import { GenerateProvider } from "./GenerateProvider";
 import React from "react";
 
 export default function GenerateLayout({
@@ -6,5 +5,5 @@ export default function GenerateLayout({
 }: {
     children: React.ReactNode;
 }) {
-    return <GenerateProvider>{children}</GenerateProvider>;
+    return <>{children}</>;
 }

@@ -93,7 +93,7 @@ export default function ChildInfoContent() {
                 <div className="grid grid-cols-2 gap-x-6 gap-y-4 w-4/5 mx-auto mt-16">
                     <div className="flex flex-col">
                         <Label htmlFor="child-name" className="font-semibold mb-1">
-                            Name of your child <span className="text-red-500">*</span>
+                            Name of your child {!storyData.childInfo.name.trim() && <span className="text-red-500">*</span>}
                         </Label>
                         <Input
                             type="text"
@@ -117,7 +117,7 @@ export default function ChildInfoContent() {
                     </div>
                     <div className="flex flex-col">
                         <Label htmlFor="child-age" className="font-semibold mb-1">
-                            Age of your Child <span className="text-red-500">*</span>
+                            Age of your Child {!storyData.childInfo.age.trim() && <span className="text-red-500">*</span>}
                         </Label>
                         <Input
                             type="text"
@@ -144,7 +144,7 @@ export default function ChildInfoContent() {
                     </div>
                     <div className="flex flex-col">
                         <Label htmlFor="gender" className="font-semibold mb-1">
-                            Gender <span className="text-red-500">*</span>
+                            Gender {!storyData.childInfo.gender.trim() && <span className="text-red-500">*</span>}
                         </Label>
                         <GenderSelect
                             value={storyData.childInfo.gender || ""}
@@ -164,12 +164,6 @@ export default function ChildInfoContent() {
                             disabled={isLoading}
                         />
                     </div>
-                </div>
-
-                <div className="w-4/5 mx-auto mt-4">
-                    <p className="text-red-500 text-sm">
-                        <span className="text-red-500">*</span> Required fields
-                    </p>
                 </div>
             </div>
 

@@ -53,7 +53,7 @@ export default function SelectValues() {
             <div className="w-4/5 mx-auto flex-1 space-y-4">
                 <div className="flex flex-col">
                     <Label htmlFor="story-goal" className="font-semibold mb-2 text-2xl">
-                        What is your goal from the story? <span className="text-red-500">*</span>
+                        What is your goal from the story? {!storyData.storyValues.goal.trim() && <span className="text-red-500">*</span>}
                     </Label>
                     <Textarea
                         className={`h-36 ${errors.goal ? "border-red-500" : ""}`}
@@ -73,12 +73,6 @@ export default function SelectValues() {
                         onValueChange={handleTagsChange}
                     />
                 </div>
-            </div>
-
-            <div className="w-4/5 mx-auto mt-4">
-                <p className="text-red-500 text-sm">
-                    <span className="text-red-500">*</span> Required fields
-                </p>
             </div>
 
             <div className="flex justify-between items-center ">

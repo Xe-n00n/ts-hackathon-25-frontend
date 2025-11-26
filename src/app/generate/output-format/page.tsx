@@ -46,7 +46,7 @@ export default function OutputFormat() {
                 <Stepper steps={5} activeStep={5} colors={["var(--green)", "var(--orange)", "var(--yellow)", "var(--purple)", "var(--dark-red)"]} />
             </div>
             <div className="w-4/5 mx-auto flex-1 space-y-2 mb-2">
-                <Label htmlFor="story-length" className="font-semibold mb-2 text-3xl">Choose Output Format</Label>
+                <Label htmlFor="story-length" className="font-semibold mb-10 text-3xl">Choose Output Format</Label>
                 <CardSelector
                     color="dark-red"
                     options={cardOptions}

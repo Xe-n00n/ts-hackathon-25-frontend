@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -7,10 +7,19 @@ import { useAuth } from "@/lib/AuthContext";
 import { baloo2 } from "@/lib/fonts";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { useStoryGeneration } from "@/lib/StoryGenerationContext";
 
 export default function Navbar() {
     const { user, isAuthenticated } = useAuth();
     const [open, setOpen] = useState(false);
+    const { resetStoryData } = useStoryGeneration();
+
+    // Handle creating a new story
+    const handleNewStory = useCallback(() => {
+        setOpen(false);
+        resetStoryData();
+        sessionStorage.removeItem('generatedStory');
+    }, [resetStoryData]);
 
     return (
         <>
@@ -30,6 +39,7 @@ export default function Navbar() {
                             <Image src="/icons/generate-icon.svg" alt="Generate Icon" width={14} height={14} />
                             <Link
                                 href="/generate"
+                                onClick={handleNewStory}
                                 className={`text-xl px-2  font-semibold text-secondary ${baloo2.className}`}
                             >
                                 New Story
@@ -111,7 +121,7 @@ export default function Navbar() {
             </nav>
 
             <div className="lg:hidden fixed top-0 left-0 p-4 z-50">
-                <Button variant="ghost" size="lg" onClick={() => setOpen(true)}>
+                <Button size="lg" onClick={() => setOpen(true)}>
                     <Menu />
                 </Button>
             </div>
@@ -138,7 +148,7 @@ export default function Navbar() {
                                     <Link
                                         href="/generate"
                                         className={`text-xl px-2 font-semibold text-secondary ${baloo2.className}`}
-                                        onClick={() => setOpen(false)}
+                                        onClick={handleNewStory}
                                     >
                                         New Story
                                     </Link>
