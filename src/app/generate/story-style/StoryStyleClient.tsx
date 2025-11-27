@@ -3,10 +3,10 @@ import Image from "next/image";
 import { baloo2 } from "@/lib/fonts";
 import { Stepper } from "@/components/ui/stepper";
 import { Label } from "@/components/ui/label";
-import StoryStyleButtons from "@/components/story-style-buttons";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CardSelector } from "@/components/card-selector";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import FormButtons from "@/components/buttons/form-buttons";
 
 export default function StoryStyleClient() {
     const { storyData, updateStoryStyle } = useStoryGeneration();
@@ -89,7 +89,7 @@ export default function StoryStyleClient() {
                     height={150}
                     className="self-center ml-4"
                 />
-                <StoryStyleButtons />
+                <FormButtons variant="yellow" previousRoute="/generate/select-values" nextRoute="/generate/custom-description" />
             </div>
         </div>
     );

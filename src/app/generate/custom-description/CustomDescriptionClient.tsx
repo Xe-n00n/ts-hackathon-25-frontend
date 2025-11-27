@@ -4,8 +4,8 @@ import { baloo2 } from "@/lib/fonts";
 import { Stepper } from "@/components/ui/stepper";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import CustomDescriptionButtons from "@/components/custom-description-buttons";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import FormButtons from "@/components/buttons/form-buttons";
 
 export default function CustomDescriptionClient() {
     const { storyData, updateCustomDescription } = useStoryGeneration();
@@ -41,7 +41,7 @@ export default function CustomDescriptionClient() {
                     height={150}
                     className="self-center ml-4"
                 />
-                <CustomDescriptionButtons />
+                <FormButtons variant="purple" previousRoute="/generate/story-style" nextRoute="/generate/output-format" />
             </div>
         </div>
     );

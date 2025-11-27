@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { baloo2 } from "@/lib/fonts";
 import { Stepper } from "@/components/ui/stepper";
-import OutputFormatButtons from "@/components/output-format-buttons";
+import OutputFormatButtons from "@/components/buttons/output-format-buttons";
 import { CardSelector } from "@/components/card-selector";
 import { Label } from "@/components/ui/label";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";

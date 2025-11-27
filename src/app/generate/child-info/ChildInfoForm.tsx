@@ -6,8 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Stepper } from "@/components/ui/stepper";
 import { baloo2 } from "@/lib/fonts";
 import { GenderSelect } from "@/components/gender-select";
-import ChildInfoButtons from "@/components/child-info-buttons";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import FormButtons from "@/components/buttons/form-buttons";
 
 interface ValidationErrors {
     name?: string;
@@ -168,7 +168,7 @@ export default function ChildInfoForm() {
                     height={100}
                     className="self-center ml-4"
                 />
-                <ChildInfoButtons isFormValid={isFormValid()} />
+                <FormButtons variant="green" previousRoute="/generate" nextRoute="/generate/select-values" isFormValid={isFormValid()} />
             </div>
         </div>
     );

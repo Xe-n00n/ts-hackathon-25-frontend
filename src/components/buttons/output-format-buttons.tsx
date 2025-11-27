@@ -25,13 +25,9 @@ export default function OutputFormatButtons() {
     };
 
     const handleDone = async () => {
-        setIsLoading(true); // show full-page loader immediately
+        setIsLoading(true);
         try {
             await generateStory();
-
-            // Optional: ensure loader shows at least 3 seconds
-            await new Promise(res => setTimeout(res, 3000));
-
             router.push("/generate/preview-story");
         } catch (error) {
             console.error("Error generating story:", error);
@@ -39,7 +35,6 @@ export default function OutputFormatButtons() {
         }
     };
 
-    // --- Full-page loader ---
     if (isLoading) {
         return (
             <div className="fixed inset-0 bg-dark-red w-screen h-screen flex items-center justify-center z-50">

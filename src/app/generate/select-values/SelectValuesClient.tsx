@@ -4,10 +4,10 @@ import Image from "next/image";
 import { baloo2 } from "@/lib/fonts";
 import { Stepper } from "@/components/ui/stepper";
 import { Label } from "@/components/ui/label";
-import SelectValuesButtons from "@/components/select-values-buttons";
 import { TagInput } from "@/components/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import FormButtons from "@/components/buttons/form-buttons";
 
 interface ValidationErrors {
     goal?: string;
@@ -81,7 +81,7 @@ export default function SelectValuesClient() {
                     height={150}
                     className="self-center ml-4"
                 />
-                <SelectValuesButtons isFormValid={isFormValid()} />
+                <FormButtons variant="orange" previousRoute="/generate/child-info" nextRoute="/generate/story-style" isFormValid={isFormValid()} />
             </div>
         </div>
     );
