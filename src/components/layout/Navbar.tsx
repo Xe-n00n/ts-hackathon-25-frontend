@@ -149,16 +149,28 @@ export default function Navbar() {
                 </div>
             </nav>
 
-            {/* Inline toggle button for small screens */}
-            <nav className="md:hidden flex flex-col items-center justify-between w-12 bg-background border-r border-[#4645406B] shadow-2xl h-screen py-4 sticky top-0">
-                <button
-                    type="button"
-                    onClick={() => setOpen(true)}
-                    className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-secondary/10 transition"
-                >
-                    <Image src="/icons/sidebar-icon.svg" alt="Open navigation menu" width={24} height={24} />
-                    <span className="sr-only">Open navigation menu</span>
-                </button>
+            {/* Mobile top navigation bar */}
+            <nav className="md:hidden w-full">
+                <div className="fixed top-0 left-0 right-0 z-40 border-b border-[#E6DCD2] bg-background/95 backdrop-blur-md shadow-sm">
+                    <div className="mx-auto flex w-full max-w-screen-sm flex items-center justify-between px-6 py-4">
+                        <Link href="/" className="flex items-center gap-3">
+                            <Image src="/Main Logo.svg" alt="Hikaya Logo" width={40} height={40} className="mb-1" />
+                            <Image src="/App Name.svg" alt="Hikaya Title" width={100} height={100} />
+                        </Link>
+
+
+                        <button
+                            type="button"
+                            aria-label="Open navigation menu"
+                            aria-expanded={open}
+                            onClick={() => setOpen(true)}
+                            className="h-14 w-14 text-dark-red"
+                        >
+                            <Image src="/icons/menu-icon.svg" alt="Menu icon" width={20} height={20} />
+
+                        </button>
+                    </div>
+                </div>
             </nav>
 
             {/* Compact sidebar for medium screens */}

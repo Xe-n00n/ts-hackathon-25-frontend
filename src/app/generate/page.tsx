@@ -21,9 +21,9 @@ const STEP_CONFIG: StepConfig[] = [
 export default function Generate() {
 
     return (
-        <div className="min-h-screen w-full container mx-auto py-6 flex flex-col items-center justify-between">
+        <div className="relative w-full container mx-auto pt-6 pb-28 md:pb-10 flex flex-col items-center md:justify-between min-h-[calc(100vh-7rem)] md:min-h-screen overflow-hidden md:overflow-visible">
             <div className="flex flex-col items-center text-center px-4">
-                <h1 className={`text-3xl font-bold text-secondary my-6 leading-tight ${quicksand.className}`}>
+                <h1 className={`text-3xl font-bold text-secondary my-0 md:my-6 leading-tight ${quicksand.className}`}>
                     Create <span className="text-green">a </span>
                     <span className="text-orange">
                         <span className="underline decoration-orange">Mag</span>
@@ -75,7 +75,7 @@ export default function Generate() {
             </div>
 
             {/* Mobile vertical stepper */}
-            <div className="w-full px-6 md:hidden flex flex-col items-center">
+            <div className="w-full px-6 md:hidden flex flex-col items-center flex-1 justify-center gap-4">
                 <MobileStepTimeline steps={STEP_CONFIG} />
                 <StoryGenerateButton />
             </div>
@@ -88,14 +88,14 @@ export default function Generate() {
                         alt="Bear Icon"
                         width={170}
                         height={170}
-                        className="absolute bottom-0 left-65"
+                        className="absolute bottom-0 left-10"
                     />
                     <Image
                         src="/icons/leaves.svg"
                         alt="Leaves Icon"
                         width={30}
                         height={30}
-                        className="absolute left-107 bottom-30"
+                        className="absolute left-55 bottom-30"
                     />
                 </div>
                 <div className="flex w-full justify-between px-4">
@@ -104,40 +104,40 @@ export default function Generate() {
                         alt="Tree Icon"
                         width={40}
                         height={40}
-                        className="self-end absolute right-60 bottom-0"
+                        className="self-end absolute right-65 bottom-0"
                     />
                     <Image
                         src="/icons/heart-icon.svg"
                         alt="Heart Icon"
                         width={40}
                         height={40}
-                        className="self-end absolute right-50 bottom-30"
+                        className="self-end absolute right-55 bottom-30"
                     />
                     <Image
                         src="/icons/fox-icon.svg"
                         alt="Fox Icon"
                         width={160}
                         height={160}
-                        className="self-end absolute bottom-0 right-0"
+                        className="self-end absolute bottom-0 right-5"
                     />
                 </div>
             </div>
 
-            {/* Mobile decorative icons: bear + fox only */}
-            <div className="flex md:hidden w-full justify-between items-end px-6 mt-10">
+            {/* Mobile decorative icons: pinned to avoid extra page height */}
+            <div className="pointer-events-none md:hidden absolute inset-x-6 bottom-6 flex justify-between items-end">
                 <Image
                     src="/icons/big-bear.svg"
                     alt="Bear Icon"
-                    width={120}
-                    height={120}
-                    className="h-auto"
+                    width={100}
+                    height={100}
+                    className="h-auto opacity-90"
                 />
                 <Image
                     src="/icons/fox-icon.svg"
                     alt="Fox Icon"
-                    width={120}
-                    height={120}
-                    className="h-auto"
+                    width={100}
+                    height={100}
+                    className="h-auto opacity-90"
                 />
             </div>
         </div>
@@ -146,7 +146,7 @@ export default function Generate() {
 
 function MobileStepTimeline({ steps }: { steps: StepConfig[] }) {
     return (
-        <div className="w-full max-w-sm my-8">
+        <div className="w-full max-w-sm my-4">
             <div className="flex flex-col items-center">
                 {steps.map((step, index) => (
                     <div
