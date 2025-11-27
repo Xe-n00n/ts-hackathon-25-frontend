@@ -42,7 +42,7 @@ export default function Navbar() {
                             <button
                                 key={`${story.title}-${idx}`}
                                 onClick={() => handleRecentStoryClick(story)}
-                                className={`w-full rounded-xl px-3 py-2 text-left text-base font-semibold text-gray shadow-sm transition hover:bg-purple/10 hover:text-purple focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple/40 ${baloo2.className}`}
+                                className={`w-full rounded-xl px-3 py-1 text-left text-base font-semibold text-gray shadow-sm transition hover:bg-purple/10 hover:text-purple focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple/40 ${baloo2.className}`}
                             >
                                 {story.title}
                             </button>
@@ -59,7 +59,7 @@ export default function Navbar() {
 
     return (
         <>
-            <nav className="hidden lg:flex h-screen w-64 bg-background border-r border-[#4645406B] shadow-2xl flex flex-col">
+            <nav className="hidden lg:flex min-h-screen w-64 bg-background border-r border-[#4645406B] shadow-2xl flex flex-col sticky top-0">
                 {/* Logo */}
                 <div className="pt-4 px-4 mb-2">
                     <Link href="/" className="flex items-center gap-3">
@@ -174,7 +174,7 @@ export default function Navbar() {
             </nav>
 
             {/* Compact sidebar for medium screens */}
-            <nav className="hidden md:flex lg:hidden flex-col items-center justify-between w-16 bg-background border-r border-[#4645406B] shadow-2xl min-h-screen lg:h-screen py-6 sticky top-0">
+            <nav className="hidden md:flex lg:hidden flex-col items-center justify-between w-16 bg-background border-r border-[#4645406B] shadow-2xl min-h-screen py-6 sticky top-0">
                 <button
                     type="button"
                     onClick={() => setOpen(true)}
