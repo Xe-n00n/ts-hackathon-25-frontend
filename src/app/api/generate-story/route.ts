@@ -1,75 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { StoryData, StoryGenerationResponse } from '@/lib/StoryGenerationContext';
+
+// Backend API request schema
+interface GenerateStoryRequest {
+    child_information: {
+        name: string;
+        favorite_pet_name?: string;
+        any_of?: string;
+        friends_names?: string[];
+        age?: number;
+        gender?: string;
+        description?: string;
+    };
+    story_goal: string;
+    tags?: string[];
+    story_length: string;
+    story_theme: string;
+    include_islamic_teaching: boolean;
+    additional_instructions?: string;
+}
+
+// Backend API response schema
+interface GenerateStoryResponse {
+    title: string;
+    text: string;
+}
 
 export async function POST(request: NextRequest) {
     try {
-        const storyData: StoryData = await request.json();
-
-        console.log('📝 API received story data:', JSON.stringify(storyData, null, 2));
+        const requestData: GenerateStoryRequest = await request.json();
 
         // Basic validation
-        if (!storyData.childInfo.name || !storyData.childInfo.age) {
+        if (!requestData.child_information.name) {
             console.log('❌ Validation failed - missing required fields');
             return NextResponse.json(
-                { success: false, error: 'Child name and age are required' },
+                { error: 'Child name is required' },
                 { status: 400 }
             );
         }
 
-        // TODO: Integrate with your AI story generation service
-        // This is a placeholder implementation
-        console.log('🤖 Generating story using template...');
-        const mockStory = await generateStory(storyData);
+        // Call the actual backend API
+        const backendResponse = await fetch('https://ts-hackathon-25-backend.onrender.com/generate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestData),
+        });
 
-        const response: StoryGenerationResponse = {
-            success: true,
-            story: {
-                title: `The Adventures of ${storyData.childInfo.name}`,
-                content: mockStory,
-                format: storyData.outputFormat
-            }
-        };
+        if (!backendResponse.ok) {
+            const errorData = await backendResponse.json().catch(() => ({ error: 'Unknown error' }));
+            return NextResponse.json(
+                { error: errorData.error || 'Backend API error' },
+                { status: backendResponse.status }
+            );
+        }
 
-        console.log('✅ API sending response:', JSON.stringify(response, null, 2));
+        const apiResponse: GenerateStoryResponse = await backendResponse.json();
 
-        return NextResponse.json(response);
+
+        return NextResponse.json(apiResponse);
     } catch (error) {
         console.error('❌ Error generating story:', error);
         return NextResponse.json(
-            { success: false, error: 'Failed to generate story' },
+            { error: 'Failed to generate story' },
             { status: 500 }
         );
     }
-}
-
-// Placeholder story generation function
-// Replace this with your actual AI service integration
-async function generateStory(storyData: StoryData): Promise<string> {
-    const { childInfo, storyValues, storyStyle, customDescription } = storyData;
-
-    // This is a very basic template - replace with your AI story generation
-    let story = `Once upon a time, there was a wonderful child named ${childInfo.name}. `;
-    story += `${childInfo.name} was ${childInfo.age} years old and loved ${childInfo.favouritePet}. `;
-
-    if (childInfo.friendsName) {
-        story += `${childInfo.name} had many friends including ${childInfo.friendsName}. `;
-    }
-
-    story += `One day, ${childInfo.name} embarked on a ${storyStyle.length} ${storyStyle.theme} adventure. `;
-
-    if (storyValues.goal) {
-        story += `The goal of this story was to help ${childInfo.name} learn about ${storyValues.goal}. `;
-    }
-
-    if (customDescription.personalDescription) {
-        story += `Additionally, ${customDescription.personalDescription} `;
-    }
-
-    if (storyStyle.islamicTeaching) {
-        story += `This story also includes important Islamic teachings and values. `;
-    }
-
-    story += `And they all lived happily ever after!`;
-
-    return story;
 }

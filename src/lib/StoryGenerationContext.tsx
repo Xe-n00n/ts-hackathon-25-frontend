@@ -34,6 +34,13 @@ export interface StoryData {
     outputFormat: 'text-only' | 'illustrated-digital-book' | 'audio-version' | 'printable-pdf';
 }
 
+export interface RecentStory {
+    title: string;
+    content: string;
+    createdAt: string;
+    format: string;
+}
+
 export interface StoryGenerationResponse {
     success: boolean;
     story?: {
@@ -46,6 +53,7 @@ export interface StoryGenerationResponse {
 
 interface StoryGenerationContextType {
     storyData: StoryData;
+    recentStories: RecentStory[];
     updateChildInfo: (data: Partial<ChildInfo>) => void;
     updateStoryValues: (data: Partial<StoryValues>) => void;
     updateStoryStyle: (data: Partial<StoryStyle>) => void;
@@ -53,6 +61,8 @@ interface StoryGenerationContextType {
     updateOutputFormat: (format: StoryData['outputFormat']) => void;
     resetStoryData: () => void;
     generateStory: () => Promise<StoryGenerationResponse>;
+    getLatestStoryTitle: () => string | null;
+    selectRecentStory: (story: RecentStory) => void;
     isLoading: boolean;
     error: string | null;
 }
@@ -86,8 +96,30 @@ const StoryGenerationContext = createContext<StoryGenerationContextType | undefi
 
 export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     const [storyData, setStoryData] = useState<StoryData>(initialStoryData);
+    const [recentStories, setRecentStories] = useState<RecentStory[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // Load recent stories from localStorage on mount
+    useEffect(() => {
+        const savedStories = localStorage.getItem('recentStories');
+        if (savedStories) {
+            try {
+                setRecentStories(JSON.parse(savedStories));
+            } catch (error) {
+                console.error('Error loading recent stories:', error);
+            }
+        }
+    }, []);
+
+    // Save recent stories to localStorage whenever recentStories changes
+    useEffect(() => {
+        try {
+            localStorage.setItem('recentStories', JSON.stringify(recentStories));
+        } catch (error) {
+            console.error('Error saving recent stories:', error);
+        }
+    }, [recentStories]);
 
     // Load data from localStorage on mount
     useEffect(() => {
@@ -111,6 +143,28 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             setError('Failed to save data');
         }
     }, [storyData]);
+
+    // Add story to recent stories
+    const addToRecentStories = (story: { title: string; content: string; format: string }) => {
+        const newStory: RecentStory = {
+            ...story,
+            createdAt: new Date().toISOString(),
+        };
+
+        setRecentStories(prev => {
+            // Remove duplicate titles
+            const filteredStories = prev.filter(s => s.title !== story.title);
+            // Add new story to the beginning and limit to 5 recent stories
+            return [newStory, ...filteredStories].slice(0, 5);
+        });
+    };
+
+    // Get latest story title
+    const getLatestStoryTitle = useMemo(() => {
+        return () => {
+            return recentStories.length > 0 ? recentStories[0].title : null;
+        };
+    }, [recentStories]);
 
     // Memoized update functions to prevent unnecessary re-renders
     const updateChildInfo = useMemo(() => {
@@ -163,6 +217,17 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             setStoryData(initialStoryData);
             setError(null);
             localStorage.removeItem('storyGenerationData');
+            sessionStorage.removeItem('generatedStory'); // Clear generated story too
+        };
+    }, []);
+    const selectRecentStory = useMemo(() => {
+        return (story: RecentStory) => {
+            console.log('📖 Selecting recent story:', story.title);
+            sessionStorage.setItem('generatedStory', JSON.stringify({
+                title: story.title,
+                content: story.content,
+                format: story.format
+            }));
         };
     }, []);
 
@@ -174,16 +239,60 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             try {
                 console.log('🚀 Generating story with data:', JSON.stringify(storyData, null, 2));
 
-                // Simulate API call
-                await new Promise(resolve => setTimeout(resolve, 1000));
+                // Transform the data to match the backend API schema
+                const requestBody = {
+                    child_information: {
+                        name: storyData.childInfo.name,
+                        favorite_pet_name: storyData.childInfo.favouritePet || undefined,
+                        friends_names: storyData.childInfo.friendsName ? [storyData.childInfo.friendsName] : undefined,
+                        age: storyData.childInfo.age ? parseInt(storyData.childInfo.age) : undefined,
+                        gender: storyData.childInfo.gender || undefined,
+                        description: storyData.childInfo.description || undefined,
+                    },
+                    story_goal: storyData.storyValues.goal,
+                    tags: storyData.storyValues.tags,
+                    story_length: storyData.storyStyle.length,
+                    story_theme: storyData.storyStyle.theme,
+                    include_islamic_teaching: storyData.storyStyle.islamicTeaching,
+                    additional_instructions: storyData.customDescription.personalDescription || undefined,
+                };
+
+                console.log('📡 Sending request to API:', JSON.stringify(requestBody, null, 2));
+
+                // Call the actual API
+                const response = await fetch('/api/generate-story', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody),
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to generate story');
+                }
+
+                const apiResponse = await response.json();
+
+                console.log('✅ API Response received:', apiResponse);
+
+                // Save the generated story to sessionStorage for the preview page
+                const generatedStory = {
+                    title: apiResponse.title,
+                    content: apiResponse.text,
+                    format: storyData.outputFormat
+                };
+
+                sessionStorage.setItem('generatedStory', JSON.stringify(generatedStory));
+
+                // Add to recent stories
+                addToRecentStories(generatedStory);
+
 
                 return {
                     success: true,
-                    story: {
-                        title: "Generated Story",
-                        content: "Story content would be here...",
-                        format: storyData.outputFormat
-                    }
+                    story: generatedStory
                 };
             } catch (error) {
                 const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
@@ -199,6 +308,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     // Memoized context value to prevent unnecessary re-renders
     const value = useMemo<StoryGenerationContextType>(() => ({
         storyData,
+        recentStories,
         updateChildInfo,
         updateStoryValues,
         updateStoryStyle,
@@ -206,9 +316,11 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         updateOutputFormat,
         resetStoryData,
         generateStory,
+        getLatestStoryTitle,
+        selectRecentStory,
         isLoading,
         error,
-    }), [storyData, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, resetStoryData, generateStory, isLoading, error]);
+    }), [storyData, recentStories, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
 
     return (
         <StoryGenerationContext.Provider value={value}>

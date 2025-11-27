@@ -12,7 +12,10 @@ import { useStoryGeneration } from "@/lib/StoryGenerationContext";
 export default function Navbar() {
     const { user, isAuthenticated } = useAuth();
     const [open, setOpen] = useState(false);
-    const { resetStoryData } = useStoryGeneration();
+    const { resetStoryData, getLatestStoryTitle, selectRecentStory, recentStories } = useStoryGeneration();
+
+    // Get latest story title
+    const latestStoryTitle = getLatestStoryTitle();
 
     // Handle creating a new story
     const handleNewStory = useCallback(() => {
@@ -20,6 +23,41 @@ export default function Navbar() {
         resetStoryData();
         sessionStorage.removeItem('generatedStory');
     }, [resetStoryData]);
+
+    // Handle clicking on recent story
+    const handleRecentStoryClick = useCallback((story: any) => {
+        selectRecentStory(story);
+        setOpen(false);
+    }, [selectRecentStory]);
+
+    // Render recent stories section
+    const renderRecentStories = () => {
+        if (recentStories.length > 0) {
+            return (
+                <>
+                    <p className={`text-xl font-semibold text-purple ${baloo2.className}`}>Recent</p>
+                    {recentStories.slice(0, 5).map((story, idx) => (
+                        <button
+                            key={idx}
+                            onClick={() => handleRecentStoryClick(story)}
+                            className={`text-left text-base font-medium text-gray hover:text-purple transition-colors ${baloo2.className}`}
+                        >
+                            {story.title}
+                        </button>
+                    ))}
+                </>
+            );
+        }
+
+        return (
+            <>
+                <p className={`text-xl font-semibold text-purple ${baloo2.className}`}>Recent</p>
+                <p className={`text-base font-medium text-gray ${baloo2.className}`}>
+                    No stories yet
+                </p>
+            </>
+        );
+    };
 
     return (
         <>
@@ -57,7 +95,6 @@ export default function Navbar() {
                     </div>
 
                     <div>
-
                         <div className="flex items-center pb-2">
                             <Image src="/icons/search-icon.svg" alt="Search Icon" width={14} height={14} />
                             <Link
@@ -88,12 +125,8 @@ export default function Navbar() {
                     </div>
                     <div>
                         <div className="flex flex-col items-start space-y-2">
-                            <p className={`text-xl font-semibold text-purple ${baloo2.className}`}>Recent</p>
-                            <p className={`text-base font-medium text-gray ${baloo2.className}`}>Mohamed and turtle</p>
-                            <p className={`text-base font-medium text-gray ${baloo2.className}`}>Houda in wonderland</p>
-                            <p className={`text-base font-medium text-gray ${baloo2.className}`}>Houda in the castle</p>
+                            {renderRecentStories()}
                         </div>
-
                     </div>
                     <div>
                         <div className="flex items-center pb-2">
@@ -116,8 +149,6 @@ export default function Navbar() {
                         </div>
                     </div>
                 </div>
-
-
             </nav>
 
             <div className="lg:hidden fixed top-0 left-0 p-4 z-50">
@@ -166,7 +197,6 @@ export default function Navbar() {
                             </div>
 
                             <div>
-
                                 <div className="flex items-center pb-2">
                                     <Image src="/icons/search-icon.svg" alt="Search Icon" width={14} height={14} />
                                     <Link
@@ -199,10 +229,7 @@ export default function Navbar() {
                                 </div>
                             </div>
                             <div className="flex flex-col items-start space-y-2">
-                                <p className={`text-xl font-semibold text-purple ${baloo2.className}`}>Recent</p>
-                                <p className={`text-base font-medium text-gray ${baloo2.className}`}>Mohamed and turtle</p>
-                                <p className={`text-base font-medium text-gray ${baloo2.className}`}>Houda in wonderland</p>
-                                <p className={`text-base font-medium text-gray ${baloo2.className}`}>Houda in the castle</p>
+                                {renderRecentStories()}
                             </div>
                             <div>
                                 {!isAuthenticated ? (
@@ -227,17 +254,13 @@ export default function Navbar() {
                                                 Settings
                                             </Link>
                                         </div>
-
                                     </div>
                                 ) : (
                                     <></>
-
                                 )}
                             </div>
                         </div>
                     </div>
-
-
                 </SheetContent>
             </Sheet>
         </>
