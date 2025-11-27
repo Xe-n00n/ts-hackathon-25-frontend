@@ -133,7 +133,7 @@ export function AudioPlayer({ storyTitle, storyContent }: AudioPlayerProps) {
     const disableControls = isGenerating || !storyTitle || !storyContent;
 
     return (
-        <div className="w-full px-4 py-3 rounded-full border bg-dark-red shadow-sm space-y-2">
+        <div className="w-full px-3 py-2 rounded-full border bg-dark-red shadow-sm space-y-1.5">
             <audio ref={audioRef} preload="metadata" />
 
             {/* Controls */}
@@ -155,7 +155,7 @@ export function AudioPlayer({ storyTitle, storyContent }: AudioPlayerProps) {
                 </Button>
 
                 {/* Time info */}
-                <span className="text-sm font-base text-white">
+                <span className="text-xs font-base text-white">
                     {formatTime(currentTime)}
                 </span>
 
@@ -164,19 +164,19 @@ export function AudioPlayer({ storyTitle, storyContent }: AudioPlayerProps) {
                     value={[currentTime]}
                     max={duration || 0}
                     step={0.1}
-                    className="flex-1 min-w-[160px] data-[orientation=horizontal]:h-8"
+                    className="flex-1 min-w-[160px] data-[orientation=horizontal]:h-6"
                     onValueChange={handleSeek}
                     disabled={disableControls || !audioUrl}
                 />
 
                 {/* Total duration */}
-                <span className="text-sm font-base text-white">
+                <span className="text-xs font-base text-white">
                     {formatTime(duration)}
                 </span>
             </div>
 
             {errorMessage && (
-                <p className="text-xs text-white/80">{errorMessage}</p>
+                <p className="text-[11px] text-white/80">{errorMessage}</p>
             )}
         </div>
     );

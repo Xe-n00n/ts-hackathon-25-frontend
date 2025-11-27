@@ -1,4 +1,5 @@
 "use client";
+
 import { useState, useMemo, useCallback } from "react";
 import { baloo2 } from "@/lib/fonts";
 import {
@@ -23,9 +24,7 @@ const splitStoryIntoPages = (content: string): string[] => {
 
 export default function PreviewStoryClient() {
     const { currentStory, updateCurrentStoryContent } = useStoryGeneration();
-    const storyKey = currentStory
-        ? `${currentStory.title}-${currentStory.content.length}`
-        : "empty-story";
+    const storyKey = currentStory?.title || "empty-story";
 
     return (
         <StoryViewer
@@ -47,6 +46,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
         story ? splitStoryIntoPages(story.content) : []
     );
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
 
     const pages = useMemo(() => {
         return pageContents.map((pageContent, index) => ({
@@ -66,6 +66,10 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
     }, []);
 
     const handlePageTextChange = useCallback((value: string) => {
+        if (!isEditing) {
+            return;
+        }
+
         setPageContents(prev => {
             if (!prev.length) {
                 return prev;
@@ -77,7 +81,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
             return next;
         });
         setHasUnsavedChanges(true);
-    }, [selectedIndex]);
+    }, [isEditing, selectedIndex]);
 
     const handleSaveChanges = useCallback(() => {
         if (!story || !pageContents.length) {
@@ -86,6 +90,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
 
         onSaveContent(pageContents.join("\n\n"));
         setHasUnsavedChanges(false);
+        setIsEditing(false);
     }, [story, pageContents, onSaveContent]);
 
     const handleResetChanges = useCallback(() => {
@@ -93,18 +98,32 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
             return;
         }
 
-        setPageContents(splitStoryIntoPages(story.content));
-        setSelectedIndex(0);
+        const resetPages = splitStoryIntoPages(story.content);
+        setPageContents(resetPages);
+        setSelectedIndex(prev => {
+            if (!resetPages.length) {
+                return 0;
+            }
+            return Math.min(prev, resetPages.length - 1);
+        });
         setHasUnsavedChanges(false);
+        setIsEditing(false);
     }, [story]);
+
+    const handleStartEditing = useCallback(() => {
+        if (!hasEditablePage) {
+            return;
+        }
+        setIsEditing(true);
+    }, [hasEditablePage]);
 
     const carouselItems = useMemo(() => {
         if (!pages.length) return null;
 
         return pages.map((page, index) => (
-            <CarouselItem key={index} className="flex justify-start items-center basis-1/4">
+            <CarouselItem key={index} className="flex justify-start items-center basis-1/5 max-w-[12rem]">
                 <div
-                    className={`bg-white rounded-xl p-3 w-64 h-36 flex flex-col justify-between cursor-pointer transition shadow-xl border-2
+                    className={`relative bg-white rounded-xl p-2.5 w-48 h-32 flex flex-col justify-between cursor-pointer transition shadow-xl border-2
                         ${selectedIndex === index ? "border-dark-red" : "border-transparent"}`}
                     onClick={() => handlePageSelect(index)}
                 >
@@ -113,7 +132,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                             {page.pageContent}
                         </p>
                     </div>
-                    <div className="text-dark-red text-md font-bold text-right">
+                    <div className="absolute bottom-2 right-2 text-dark-red text-sm font-semibold bg-white/70 px-1 py-0.5 rounded">
                         {page.pageNumber}
                     </div>
                 </div>
@@ -138,7 +157,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 backgroundRepeat: "repeat",
             }}
         >
-            <div className="flex flex-col items-center justify-stretch h-full space-y-16">
+            <div className="flex flex-col items-center justify-start h-full space-y-8">
                 <div className="w-full bg-dark-red py-2 flex justify-between items-center px-6">
                     <p className="text-2xl text-white font-semibold">{storyTitle}</p>
                 </div>
@@ -146,10 +165,11 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 <div className="flex flex-col items-center justify-between bg-white w-2/4 mx-auto h-3/4 shadow-xl/20 p-4 rounded-xl text-xl">
                     <div className="flex-1 w-full">
                         <Textarea
-                            className="w-full h-full resize-none border border-dark-red/30 rounded-lg p-4 text-3xl leading-relaxed break-words whitespace-pre-wrap "
+                            className="w-full h-full resize-none border border-dark-red/30 rounded-lg p-4 text-xl leading-relaxed break-words whitespace-pre-wrap "
                             value={currentPage.pageContent}
                             onChange={(event) => handlePageTextChange(event.target.value)}
-                            disabled={!hasEditablePage}
+                            readOnly={!hasEditablePage || !isEditing}
+                            aria-readonly={!hasEditablePage || !isEditing}
                         />
                     </div>
                     <div className="flex w-full items-center justify-between mt-4">
@@ -157,28 +177,41 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                             {currentPage.pageNumber}
                         </p>
                         <div className="flex gap-3">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleResetChanges}
-                                disabled={!hasUnsavedChanges || !hasEditablePage}
-                            >
-                                Reset
-                            </Button>
-                            <Button
-                                variant="darkRed"
-                                size="sm"
-                                onClick={handleSaveChanges}
-                                disabled={!hasUnsavedChanges || !hasEditablePage}
-                            >
-                                Save
-                            </Button>
+                            {!isEditing ? (
+                                <Button
+                                    variant="darkRed"
+                                    size="sm"
+                                    onClick={handleStartEditing}
+                                    disabled={!hasEditablePage}
+                                >
+                                    Edit
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleResetChanges}
+                                        disabled={!hasUnsavedChanges || !hasEditablePage}
+                                    >
+                                        Reset
+                                    </Button>
+                                    <Button
+                                        variant="darkRed"
+                                        size="sm"
+                                        onClick={handleSaveChanges}
+                                        disabled={!hasUnsavedChanges || !hasEditablePage}
+                                    >
+                                        Save
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
 
                 {showAudioPlayer && story && (
-                    <div className="w-2/4 mx-auto h-20">
+                    <div className="w-2/4 mx-auto">
                         <AudioPlayer storyTitle={story.title} storyContent={story.content} />
                     </div>
                 )}
