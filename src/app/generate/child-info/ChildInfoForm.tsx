@@ -132,7 +132,7 @@ export default function ChildInfoForm() {
                             disabled={isLoading}
                         />
                         <Label htmlFor="gender" className="font-medium mt-2 text-green text-xs">
-                            (must be in this format "Lena, Dania, sarah")
+                            (must be in this format &quot;Lena, Dania, sarah&quot;)
                         </Label>
                     </div>
                     <div className="flex flex-col">

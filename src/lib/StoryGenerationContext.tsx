@@ -23,6 +23,7 @@ interface StoryGenerationContextType {
     updateStoryStyle: (data: Partial<StoryStyle>) => void;
     updateCustomDescription: (data: Partial<CustomDescription>) => void;
     updateOutputFormat: (format: StoryData['outputFormat']) => void;
+    updateCurrentStoryContent: (content: string) => void;
     resetStoryData: () => void;
     generateStory: () => Promise<StoryGenerationResponse>;
     getLatestStoryTitle: () => string | null;
@@ -226,6 +227,29 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         };
     }, []);
 
+    const updateCurrentStoryContent = useCallback((content: string) => {
+        setCurrentStory(prev => {
+            if (!prev) {
+                return prev;
+            }
+
+            const updatedStory: GeneratedStory = {
+                ...prev,
+                content,
+            };
+
+            sessionStorage.setItem('generatedStory', JSON.stringify(updatedStory));
+
+            setRecentStories(prevStories => prevStories.map(story =>
+                story.title === updatedStory.title
+                    ? { ...story, content }
+                    : story
+            ));
+
+            return updatedStory;
+        });
+    }, []);
+
     const resetStoryData = useMemo(() => {
         return () => {
             setStoryData(initialStoryData);
@@ -285,13 +309,14 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         updateStoryStyle,
         updateCustomDescription,
         updateOutputFormat,
+        updateCurrentStoryContent,
         resetStoryData,
         generateStory,
         getLatestStoryTitle,
         selectRecentStory,
         isLoading,
         error,
-    }), [storyData, recentStories, currentStory, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
+    }), [storyData, recentStories, currentStory, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, updateCurrentStoryContent, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
 
     return (
         <StoryGenerationContext.Provider value={value}>
