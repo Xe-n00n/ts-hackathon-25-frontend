@@ -22,7 +22,7 @@ export default function CustomDescriptionClient() {
             <div className="w-4/5 mx-auto mb-2">
                 <Stepper steps={5} activeStep={4} colors={["var(--green)", "var(--orange)", "var(--yellow)", "var(--purple)"]} />
             </div>
-            <div className="w-4/5 mx-auto flex-1 space-y-6">
+            <div className="min-h-96 md:min-h-0 w-4/5 mx-auto md:flex-1 space-y-6">
                 <div className="flex flex-col">
                     <Label htmlFor="personal-description" className="font-semibold mb-2 text-2xl">Add a Personal Description (Optional)</Label>
                     <Textarea

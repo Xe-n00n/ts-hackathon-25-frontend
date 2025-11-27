@@ -49,7 +49,7 @@ export default function OutputFormatClient() {
                 />
             </div>
 
-            <div className="flex flex-col-reverse gap-4 mt-6 md:flex-row justify-between items-center">
+            <div className="flex flex-col-reverse gap-0 md:gap-4 mt-6 md:flex-row justify-between items-center">
                 <Image
                     src="/icons/sitting-bear-icon.svg"
                     alt="Sitting Bear Icon"
