@@ -12,6 +12,12 @@ export interface GenerateStoryResult {
     error?: string;
 }
 
+export interface GenerateAudioResult {
+    success: boolean;
+    audioUrl?: string;
+    error?: string;
+}
+
 interface BackendRequestBody {
     child_information: {
         name: string;
@@ -89,5 +95,40 @@ export async function generateStoryAction(storyData: StoryData): Promise<Generat
     } catch (error) {
         console.error('Failed to call generateStoryAction', error);
         return { success: false, error: 'Unexpected error generating story' };
+    }
+}
+
+export async function generateAudioAction(input: { title: string; content: string; }): Promise<GenerateAudioResult> {
+    if (!input.title || !input.content) {
+        return { success: false, error: 'Missing story data for audio generation' };
+    }
+    try {
+        const params = new URLSearchParams({
+            title: input.title,
+            text: input.content,
+        });
+        const response = await fetch(`https://ts-hackathon-25-backend.onrender.com/stream?${params.toString()}`, {
+            method: 'GET',
+            cache: 'no-store',
+        });
+        if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            console.error('Audio generation failed:', errorText);
+            return { success: false, error: 'Failed to generate audio' };
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        if (!arrayBuffer.byteLength) {
+            return { success: false, error: 'No audio data received' };
+        }
+
+        const base64Audio = Buffer.from(arrayBuffer).toString('base64');
+        const contentType = response.headers.get('content-type') || 'audio/mpeg';
+        const dataUrl = `data:${contentType};base64,${base64Audio}`;
+
+        return { success: true, audioUrl: dataUrl };
+    } catch (error) {
+        console.error('Failed to call generateAudioAction', error);
+        return { success: false, error: 'Unexpected error generating audio' };
     }
 }

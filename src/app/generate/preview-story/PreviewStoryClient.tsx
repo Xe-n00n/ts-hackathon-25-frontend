@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { baloo2 } from "@/lib/fonts";
 import {
     Carousel,
@@ -12,6 +12,7 @@ import { useStoryGeneration } from "@/lib/StoryGenerationContext";
 import { GeneratedStory } from "@/lib/story-types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { AudioPlayer } from "@/components/audio/audio-player";
 
 const splitStoryIntoPages = (content: string): string[] => {
     return content
@@ -22,9 +23,13 @@ const splitStoryIntoPages = (content: string): string[] => {
 
 export default function PreviewStoryClient() {
     const { currentStory, updateCurrentStoryContent } = useStoryGeneration();
+    const storyKey = currentStory
+        ? `${currentStory.title}-${currentStory.content.length}`
+        : "empty-story";
 
     return (
         <StoryViewer
+            key={storyKey}
             story={currentStory}
             onSaveContent={updateCurrentStoryContent}
         />
@@ -42,19 +47,6 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
         story ? splitStoryIntoPages(story.content) : []
     );
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-
-    useEffect(() => {
-        if (!story) {
-            setPageContents([]);
-            setSelectedIndex(0);
-            setHasUnsavedChanges(false);
-            return;
-        }
-
-        setPageContents(splitStoryIntoPages(story.content));
-        setSelectedIndex(0);
-        setHasUnsavedChanges(false);
-    }, [story]);
 
     const pages = useMemo(() => {
         return pageContents.map((pageContent, index) => ({
@@ -130,10 +122,15 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
     }, [pages, selectedIndex, handlePageSelect]);
 
     const storyTitle = story?.title;
+    const showAudioPlayer = Boolean(
+        story &&
+        Array.isArray(story.format) &&
+        story.format.includes("audio-version")
+    );
 
     return (
         <div
-            className={`h-screen min-h-screen container mx-auto flex flex-col overflow-y-auto ${baloo2.className}`}
+            className={`h-screen container mx-auto flex flex-col overflow-y-auto ${baloo2.className}`}
             style={{
                 backgroundImage: "url('/story-background.svg')",
                 backgroundSize: "contain",
@@ -141,7 +138,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 backgroundRepeat: "repeat",
             }}
         >
-            <div className="flex flex-col items-center h-full space-y-16">
+            <div className="flex flex-col items-center justify-stretch h-full space-y-16">
                 <div className="w-full bg-dark-red py-2 flex justify-between items-center px-6">
                     <p className="text-2xl text-white font-semibold">{storyTitle}</p>
                 </div>
@@ -149,7 +146,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 <div className="flex flex-col items-center justify-between bg-white w-2/4 mx-auto h-3/4 shadow-xl/20 p-4 rounded-xl text-xl">
                     <div className="flex-1 w-full">
                         <Textarea
-                            className="w-full h-full resize-none border border-dark-red/30 rounded-lg p-4 text-3xl leading-relaxed break-words whitespace-pre-wrap focus:outline-none focus:ring-2 focus:ring-dark-red"
+                            className="w-full h-full resize-none border border-dark-red/30 rounded-lg p-4 text-3xl leading-relaxed break-words whitespace-pre-wrap "
                             value={currentPage.pageContent}
                             onChange={(event) => handlePageTextChange(event.target.value)}
                             disabled={!hasEditablePage}
@@ -162,6 +159,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                         <div className="flex gap-3">
                             <Button
                                 variant="outline"
+                                size="sm"
                                 onClick={handleResetChanges}
                                 disabled={!hasUnsavedChanges || !hasEditablePage}
                             >
@@ -169,6 +167,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                             </Button>
                             <Button
                                 variant="darkRed"
+                                size="sm"
                                 onClick={handleSaveChanges}
                                 disabled={!hasUnsavedChanges || !hasEditablePage}
                             >
@@ -177,6 +176,12 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                         </div>
                     </div>
                 </div>
+
+                {showAudioPlayer && story && (
+                    <div className="w-2/4 mx-auto h-20">
+                        <AudioPlayer storyTitle={story.title} storyContent={story.content} />
+                    </div>
+                )}
 
                 <div className="w-full max-w-5xl mx-auto">
                     <Carousel opts={{ align: "start", slidesToScroll: 1 }} className="w-full mb-4">
