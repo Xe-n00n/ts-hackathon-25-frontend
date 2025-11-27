@@ -149,7 +149,20 @@ export default function Navbar() {
                 </div>
             </nav>
 
-            <nav className="lg:hidden flex flex-col items-center justify-between w-14 bg-background border-r border-[#4645406B] shadow-2xl h-screen py-6 sticky top-0 overflow-y-auto">
+            {/* Inline toggle button for small screens */}
+            <nav className="md:hidden flex flex-col items-center justify-between w-12 bg-background border-r border-[#4645406B] shadow-2xl h-screen py-4 sticky top-0">
+                <button
+                    type="button"
+                    onClick={() => setOpen(true)}
+                    className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-secondary/10 transition"
+                >
+                    <Image src="/icons/sidebar-icon.svg" alt="Open navigation menu" width={24} height={24} />
+                    <span className="sr-only">Open navigation menu</span>
+                </button>
+            </nav>
+
+            {/* Compact sidebar for medium screens */}
+            <nav className="hidden md:flex lg:hidden flex-col items-center justify-between w-16 bg-background border-r border-[#4645406B] shadow-2xl min-h-screen lg:h-screen py-6 sticky top-0">
                 <button
                     type="button"
                     onClick={() => setOpen(true)}
@@ -160,7 +173,11 @@ export default function Navbar() {
                 </button>
 
                 <div className="flex flex-col items-center gap-4">
-                    <Link href="/generate" onClick={handleNewStory} className="p-2 rounded-full hover:bg-secondary/10 transition transform hover:scale-110">
+                    <Link
+                        href="/generate"
+                        onClick={handleNewStory}
+                        className="p-2 rounded-full hover:bg-secondary/10 transition transform hover:scale-110"
+                    >
                         <Image src="/icons/generate-icon.svg" alt="New Story" width={20} height={20} />
                         <span className="sr-only">New Story</span>
                     </Link>
@@ -183,7 +200,7 @@ export default function Navbar() {
                 </div>
                 <div className="flex flex-col items-center gap-4">
                     <Link href="" className="p-2 rounded-full hover:bg-secondary/10 transition">
-                        <Image src="/icons/trash-icon.svg" alt="trash" width={20} height={20} />
+                        <Image src="/icons/trash-icon.svg" alt="Trash" width={20} height={20} />
                         <span className="sr-only">Trash</span>
                     </Link>
                     <Link href="" className="p-2 rounded-full hover:bg-secondary/10 transition">
