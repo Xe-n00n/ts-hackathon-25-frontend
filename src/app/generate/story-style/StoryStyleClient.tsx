@@ -81,7 +81,7 @@ export default function StoryStyleClient() {
                     </div>
                 </RadioGroup>
             </div>
-            <div className="flex flex-col-reverse gap-4 mt-6 md:flex-row justify-between items-center">
+            <div className="flex flex-col-reverse gap-4 mt-2 md:flex-row justify-between items-center">
                 <Image
                     src="/icons/hodge-icon.svg"
                     alt="Hodge Icon"
