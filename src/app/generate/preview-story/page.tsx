@@ -8,62 +8,28 @@ import {
     CarouselNext,
     CarouselPrevious,
 } from "@/components/ui/carousel";
+import { useStoryGeneration } from "@/lib/StoryGenerationContext";
 
 interface StoryPage {
     pageContent: string;
     pageNumber: number;
 }
 
-interface GeneratedStory {
-    title: string;
-    content: string;
-    format: string;
-}
-
 export default function PreviewStory() {
     const [selectedIndex, setSelectedIndex] = useState(0);
-    const [generatedStory, setGeneratedStory] = useState<GeneratedStory | null>(() => {
-        if (typeof window === "undefined") return null; // avoid SSR issues
-        const storyDataString = sessionStorage.getItem("generatedStory");
-        try {
-            return storyDataString ? JSON.parse(storyDataString) : null;
-        } catch {
-            return null;
-        }
-    });
+    const { currentStory } = useStoryGeneration();
 
     useEffect(() => {
-        // Delay the initial state update to avoid cascading render
-        const storyDataString = sessionStorage.getItem("generatedStory");
-        if (storyDataString) {
-            try {
-                const story = JSON.parse(storyDataString);
-                queueMicrotask(() => setGeneratedStory(story));
-            } catch (error) {
-                console.error(error);
-            }
+        if (currentStory) {
+            setSelectedIndex(0);
         }
-
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === "generatedStory" && event.newValue) {
-                try {
-                    setGeneratedStory(JSON.parse(event.newValue));
-                    setSelectedIndex(0);
-                } catch (error) {
-                    console.error(error);
-                }
-            }
-        };
-
-        window.addEventListener("storage", handleStorageChange);
-        return () => window.removeEventListener("storage", handleStorageChange);
-    }, []);
+    }, [currentStory]);
 
     // Split story into pages
     const story = useMemo(() => {
-        if (!generatedStory) return [];
+        if (!currentStory) return [];
 
-        const content = generatedStory.content;
+        const content = currentStory.content;
         const paragraphs = content
             .split("\n\n")
             .filter((p: string) => p.trim().length > 0);
@@ -74,7 +40,7 @@ export default function PreviewStory() {
         }));
 
         return pages;
-    }, [generatedStory]);
+    }, [currentStory]);
 
     // Prevent errors on empty story
     const currentPage = story.length
@@ -109,7 +75,7 @@ export default function PreviewStory() {
     }, [story, selectedIndex, handlePageSelect]);
 
     // If title doesn't exist, fallback to child's name
-    const storyTitle = generatedStory?.title
+    const storyTitle = currentStory?.title;
 
     return (
         <div

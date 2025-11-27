@@ -34,26 +34,26 @@ export interface StoryData {
     outputFormat: 'text-only' | 'illustrated-digital-book' | 'audio-version' | 'printable-pdf';
 }
 
-export interface RecentStory {
+export interface GeneratedStory {
     title: string;
     content: string;
-    createdAt: string;
     format: string;
+}
+
+export interface RecentStory extends GeneratedStory {
+    createdAt: string;
 }
 
 export interface StoryGenerationResponse {
     success: boolean;
-    story?: {
-        title: string;
-        content: string;
-        format: string;
-    };
+    story?: GeneratedStory;
     error?: string;
 }
 
 interface StoryGenerationContextType {
     storyData: StoryData;
     recentStories: RecentStory[];
+    currentStory: GeneratedStory | null;
     updateChildInfo: (data: Partial<ChildInfo>) => void;
     updateStoryValues: (data: Partial<StoryValues>) => void;
     updateStoryStyle: (data: Partial<StoryStyle>) => void;
@@ -97,8 +97,10 @@ const StoryGenerationContext = createContext<StoryGenerationContextType | undefi
 export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     const [storyData, setStoryData] = useState<StoryData>(initialStoryData);
     const [recentStories, setRecentStories] = useState<RecentStory[]>([]);
+    const [currentStory, setCurrentStory] = useState<GeneratedStory | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [hasLoadedRecentStories, setHasLoadedRecentStories] = useState(false);
 
     // Load recent stories from localStorage on mount
     useEffect(() => {
@@ -110,16 +112,20 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
                 console.error('Error loading recent stories:', error);
             }
         }
+        setHasLoadedRecentStories(true);
     }, []);
 
     // Save recent stories to localStorage whenever recentStories changes
     useEffect(() => {
+        if (!hasLoadedRecentStories) {
+            return;
+        }
         try {
             localStorage.setItem('recentStories', JSON.stringify(recentStories));
         } catch (error) {
             console.error('Error saving recent stories:', error);
         }
-    }, [recentStories]);
+    }, [recentStories, hasLoadedRecentStories]);
 
     // Load data from localStorage on mount
     useEffect(() => {
@@ -130,6 +136,18 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             } catch (error) {
                 console.error('Error loading saved story data:', error);
                 setError('Failed to load saved data');
+            }
+        }
+    }, []);
+
+    // Load currently selected story from sessionStorage on mount
+    useEffect(() => {
+        const storedStory = sessionStorage.getItem('generatedStory');
+        if (storedStory) {
+            try {
+                setCurrentStory(JSON.parse(storedStory));
+            } catch (error) {
+                console.error('Error loading current story:', error);
             }
         }
     }, []);
@@ -145,7 +163,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     }, [storyData]);
 
     // Add story to recent stories
-    const addToRecentStories = (story: { title: string; content: string; format: string }) => {
+    const addToRecentStories = (story: GeneratedStory) => {
         const newStory: RecentStory = {
             ...story,
             createdAt: new Date().toISOString(),
@@ -223,11 +241,13 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     const selectRecentStory = useMemo(() => {
         return (story: RecentStory) => {
             console.log('📖 Selecting recent story:', story.title);
-            sessionStorage.setItem('generatedStory', JSON.stringify({
+            const serializedStory: GeneratedStory = {
                 title: story.title,
                 content: story.content,
                 format: story.format
-            }));
+            };
+            sessionStorage.setItem('generatedStory', JSON.stringify(serializedStory));
+            setCurrentStory(serializedStory);
         };
     }, []);
 
@@ -285,6 +305,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
                 };
 
                 sessionStorage.setItem('generatedStory', JSON.stringify(generatedStory));
+                setCurrentStory(generatedStory);
 
                 // Add to recent stories
                 addToRecentStories(generatedStory);
@@ -309,6 +330,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     const value = useMemo<StoryGenerationContextType>(() => ({
         storyData,
         recentStories,
+        currentStory,
         updateChildInfo,
         updateStoryValues,
         updateStoryStyle,
@@ -320,7 +342,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         selectRecentStory,
         isLoading,
         error,
-    }), [storyData, recentStories, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
+    }), [storyData, recentStories, currentStory, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
 
     return (
         <StoryGenerationContext.Provider value={value}>

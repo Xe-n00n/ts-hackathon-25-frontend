@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 import { Menu } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/AuthContext";
 import { baloo2 } from "@/lib/fonts";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
@@ -12,6 +13,7 @@ import { useStoryGeneration } from "@/lib/StoryGenerationContext";
 export default function Navbar() {
     const { user, isAuthenticated } = useAuth();
     const [open, setOpen] = useState(false);
+    const router = useRouter();
     const { resetStoryData, getLatestStoryTitle, selectRecentStory, recentStories } = useStoryGeneration();
 
     // Get latest story title
@@ -27,35 +29,35 @@ export default function Navbar() {
     // Handle clicking on recent story
     const handleRecentStoryClick = useCallback((story: any) => {
         selectRecentStory(story);
+        router.push("/generate/preview-story");
         setOpen(false);
-    }, [selectRecentStory]);
+    }, [selectRecentStory, router]);
 
     // Render recent stories section
     const renderRecentStories = () => {
-        if (recentStories.length > 0) {
-            return (
-                <>
-                    <p className={`text-xl font-semibold text-purple ${baloo2.className}`}>Recent</p>
-                    {recentStories.slice(0, 5).map((story, idx) => (
-                        <button
-                            key={idx}
-                            onClick={() => handleRecentStoryClick(story)}
-                            className={`text-left text-base font-medium text-gray hover:text-purple transition-colors ${baloo2.className}`}
-                        >
-                            {story.title}
-                        </button>
-                    ))}
-                </>
-            );
-        }
+        const hasStories = recentStories.length > 0;
 
         return (
-            <>
-                <p className={`text-xl font-semibold text-purple ${baloo2.className}`}>Recent</p>
-                <p className={`text-base font-medium text-gray ${baloo2.className}`}>
-                    No stories yet
-                </p>
-            </>
+            <div className="w-full rounded-2xl px-1 py-2">
+                <p className={`text-xl font-semibold text-purple mb-2 ${baloo2.className}`}>Recent</p>
+                {hasStories ? (
+                    <div className="space-y-2">
+                        {recentStories.slice(0, 5).map((story, idx) => (
+                            <button
+                                key={`${story.title}-${idx}`}
+                                onClick={() => handleRecentStoryClick(story)}
+                                className={`w-full rounded-xl px-3 py-2 text-left text-base font-semibold text-gray shadow-sm transition hover:bg-purple/10 hover:text-purple focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple/40 ${baloo2.className}`}
+                            >
+                                {story.title}
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <p className={`text-base font-medium text-gray ${baloo2.className}`}>
+                        No stories yet
+                    </p>
+                )}
+            </div>
         );
     };
 
