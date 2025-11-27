@@ -9,15 +9,13 @@ import { baloo2 } from "@/lib/fonts";
 import { Sheet, SheetContent, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import { RecentStory } from "@/lib/story-types";
 
 export default function Navbar() {
     const { user, isAuthenticated } = useAuth();
     const [open, setOpen] = useState(false);
     const router = useRouter();
-    const { resetStoryData, getLatestStoryTitle, selectRecentStory, recentStories } = useStoryGeneration();
-
-    // Get latest story title
-    const latestStoryTitle = getLatestStoryTitle();
+    const { resetStoryData, selectRecentStory, recentStories } = useStoryGeneration();
 
     // Handle creating a new story
     const handleNewStory = useCallback(() => {
@@ -27,7 +25,7 @@ export default function Navbar() {
     }, [resetStoryData]);
 
     // Handle clicking on recent story
-    const handleRecentStoryClick = useCallback((story: any) => {
+    const handleRecentStoryClick = useCallback((story: RecentStory) => {
         selectRecentStory(story);
         router.push("/generate/preview-story");
         setOpen(false);
