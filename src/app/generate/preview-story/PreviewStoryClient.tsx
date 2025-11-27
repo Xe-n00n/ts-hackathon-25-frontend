@@ -95,8 +95,8 @@ function StoryViewer({ story }: { story: GeneratedStory | null }) {
                 </div>
 
                 <div className="w-full max-w-5xl mx-auto">
-                    <Carousel opts={{ align: "center", slidesToScroll: 2 }} className="w-full mb-4">
-                        <CarouselContent className="flex gap-x-2 justify-center items-center m-0">
+                    <Carousel opts={{ align: "start", slidesToScroll: 1 }} className="w-full mb-4">
+                        <CarouselContent className="flex gap-x-2 justify-start items-center m-0">
                             {carouselItems}
                         </CarouselContent>
                         <CarouselPrevious />
