@@ -68,7 +68,7 @@ function StoryViewer({ story }: { story: GeneratedStory | null }) {
 
     return (
         <div
-            className={`h-screen max-h-screen overflow-hidden container mx-auto flex flex-col ${baloo2.className}`}
+            className={`h-screen min-h-screen container mx-auto flex flex-col overflow-y-auto ${baloo2.className}`}
             style={{
                 backgroundImage: "url('/story-background.svg')",
                 backgroundSize: "contain",
