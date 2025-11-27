@@ -23,18 +23,31 @@ export interface CustomDescription {
     tags: string[];
 }
 
+export type OutputFormatOption =
+    'text-only' |
+    'illustrated-digital-book' |
+    'audio-version' |
+    'printable-pdf';
+
+export const OUTPUT_FORMAT_OPTIONS: OutputFormatOption[] = [
+    'text-only',
+    'illustrated-digital-book',
+    'audio-version',
+    'printable-pdf',
+];
+
 export interface StoryData {
     childInfo: ChildInfo;
     storyValues: StoryValues;
     storyStyle: StoryStyle;
     customDescription: CustomDescription;
-    outputFormat: 'text-only' | 'illustrated-digital-book' | 'audio-version' | 'printable-pdf';
+    outputFormat: OutputFormatOption[];
 }
 
 export interface GeneratedStory {
     title: string;
     content: string;
-    format: string;
+    format: OutputFormatOption[];
 }
 
 export interface RecentStory extends GeneratedStory {

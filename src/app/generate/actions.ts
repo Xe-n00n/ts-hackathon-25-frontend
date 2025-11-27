@@ -83,7 +83,7 @@ export async function generateStoryAction(storyData: StoryData): Promise<Generat
             story: {
                 title: data.title,
                 content: data.text,
-                format: storyData.outputFormat,
+                format: [...storyData.outputFormat],
             },
         };
     } catch (error) {

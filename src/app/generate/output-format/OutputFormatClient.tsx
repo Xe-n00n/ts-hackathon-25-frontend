@@ -6,19 +6,27 @@ import OutputFormatButtons from "@/components/output-format-buttons";
 import { CardSelector } from "@/components/card-selector";
 import { Label } from "@/components/ui/label";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import { OutputFormatOption } from "@/lib/story-types";
 
 export default function OutputFormatClient() {
     const { storyData, updateOutputFormat } = useStoryGeneration();
 
     const cardOptions = [
-        { value: "text-only", label: "Text Only", emoji: "🖼️" },
-        { value: "illustrated-digital-book", label: "Illustrated Digital Book", emoji: "🏡" },
-        { value: "audio-version", label: "Audio Version", emoji: "🏫" },
-        { value: "printable-pdf", label: "Printable PDF", emoji: "🏫" },
+        { value: "text-only", label: "Text Only", emoji: "📄" },
+        { value: "illustrated-digital-book", label: "Illustrated Digital Book", emoji: "🖼️" },
+        { value: "audio-version", label: "Audio Version", emoji: "🎧" },
+        { value: "printable-pdf", label: "Printable PDF", emoji: " 🖨️" },
     ];
 
-    const handleFormatChange = (value: string) => {
-        updateOutputFormat(value as 'text-only' | 'illustrated-digital-book' | 'audio-version' | 'printable-pdf');
+    const handleFormatChange = (value: string | string[]) => {
+        if (!Array.isArray(value)) {
+            return;
+        }
+        if (value.length === 0) {
+            // Prevent clearing the final selection entirely
+            return;
+        }
+        updateOutputFormat(value as OutputFormatOption[]);
     };
 
     return (
@@ -37,6 +45,7 @@ export default function OutputFormatClient() {
                     className="grid grid-cols-2 gap-12 w-4/5 mx-auto"
                     value={storyData.outputFormat}
                     onChange={handleFormatChange}
+                    multiple
                 />
             </div>
 

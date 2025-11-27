@@ -9,7 +9,9 @@ import {
     StoryData,
     GeneratedStory,
     RecentStory,
-    StoryGenerationResponse
+    StoryGenerationResponse,
+    OutputFormatOption,
+    OUTPUT_FORMAT_OPTIONS,
 } from './story-types';
 
 interface StoryGenerationContextType {
@@ -28,6 +30,21 @@ interface StoryGenerationContextType {
     isLoading: boolean;
     error: string | null;
 }
+
+const normalizeOutputFormats = (value: unknown): OutputFormatOption[] => {
+    if (Array.isArray(value)) {
+        const filtered = value.filter((item): item is OutputFormatOption =>
+            typeof item === 'string' && OUTPUT_FORMAT_OPTIONS.includes(item as OutputFormatOption)
+        );
+        return filtered.length > 0 ? filtered : [OUTPUT_FORMAT_OPTIONS[0]];
+    }
+
+    if (typeof value === 'string' && OUTPUT_FORMAT_OPTIONS.includes(value as OutputFormatOption)) {
+        return [value as OutputFormatOption];
+    }
+
+    return [OUTPUT_FORMAT_OPTIONS[0]];
+};
 
 const initialStoryData: StoryData = {
     childInfo: {
@@ -51,7 +68,7 @@ const initialStoryData: StoryData = {
         personalDescription: '',
         tags: [],
     },
-    outputFormat: 'text-only',
+    outputFormat: [OUTPUT_FORMAT_OPTIONS[0]],
 };
 
 const StoryGenerationContext = createContext<StoryGenerationContextType | undefined>(undefined);
@@ -69,7 +86,11 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         const savedStories = localStorage.getItem('recentStories');
         if (savedStories) {
             try {
-                setRecentStories(JSON.parse(savedStories));
+                const parsedStories: RecentStory[] = JSON.parse(savedStories);
+                setRecentStories(parsedStories.map(story => ({
+                    ...story,
+                    format: normalizeOutputFormats(story.format),
+                })));
             } catch (error) {
                 console.error('Error loading recent stories:', error);
             }
@@ -94,7 +115,11 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         const savedData = localStorage.getItem('storyGenerationData');
         if (savedData) {
             try {
-                setStoryData(JSON.parse(savedData));
+                const parsedData = JSON.parse(savedData);
+                setStoryData({
+                    ...parsedData,
+                    outputFormat: normalizeOutputFormats(parsedData?.outputFormat),
+                });
             } catch (error) {
                 console.error('Error loading saved story data:', error);
                 setError('Failed to load saved data');
@@ -107,7 +132,11 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         const storedStory = sessionStorage.getItem('generatedStory');
         if (storedStory) {
             try {
-                setCurrentStory(JSON.parse(storedStory));
+                const parsedStory = JSON.parse(storedStory);
+                setCurrentStory({
+                    ...parsedStory,
+                    format: normalizeOutputFormats(parsedStory?.format),
+                });
             } catch (error) {
                 console.error('Error loading current story:', error);
             }
@@ -126,8 +155,13 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
 
     // Add story to recent stories
     const addToRecentStories = useCallback((story: GeneratedStory) => {
-        const newStory: RecentStory = {
+        const normalizedStory: GeneratedStory = {
             ...story,
+            format: normalizeOutputFormats(story.format),
+        };
+
+        const newStory: RecentStory = {
+            ...normalizedStory,
             createdAt: new Date().toISOString(),
         };
 
@@ -187,7 +221,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         return (format: StoryData['outputFormat']) => {
             setStoryData(prev => ({
                 ...prev,
-                outputFormat: format
+                outputFormat: normalizeOutputFormats(format)
             }));
         };
     }, []);
@@ -204,7 +238,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         const serializedStory: GeneratedStory = {
             title: story.title,
             content: story.content,
-            format: story.format
+            format: normalizeOutputFormats(story.format)
         };
         sessionStorage.setItem('generatedStory', JSON.stringify(serializedStory));
         setCurrentStory(serializedStory);
@@ -218,10 +252,15 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             const result = await generateStoryAction(storyData);
 
             if (result.success && result.story) {
-                sessionStorage.setItem('generatedStory', JSON.stringify(result.story));
-                setCurrentStory(result.story);
-                addToRecentStories(result.story);
-                return result;
+                const sanitizedStory: GeneratedStory = {
+                    ...result.story,
+                    format: normalizeOutputFormats(result.story.format),
+                };
+
+                sessionStorage.setItem('generatedStory', JSON.stringify(sanitizedStory));
+                setCurrentStory(sanitizedStory);
+                addToRecentStories(sanitizedStory);
+                return { success: true, story: sanitizedStory };
             }
 
             const message = result.error || 'Failed to generate story';

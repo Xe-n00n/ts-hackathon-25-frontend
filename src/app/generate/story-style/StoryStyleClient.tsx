@@ -12,7 +12,7 @@ export default function StoryStyleClient() {
     const { storyData, updateStoryStyle } = useStoryGeneration();
 
     const cardOptions = [
-        { value: "adventure", label: "Adventure", emoji: "🖼️" },
+        { value: "adventure", label: "Adventure", emoji: "🏞️" },
         { value: "home", label: "Home", emoji: "🏡" },
         { value: "school", label: "School", emoji: "🏫" },
     ];
@@ -21,8 +21,12 @@ export default function StoryStyleClient() {
         updateStoryStyle({ length: value as 'short' | 'medium' | 'long' });
     };
 
-    const handleThemeChange = (value: string) => {
-        updateStoryStyle({ theme: value as 'adventure' | 'home' | 'school' });
+    const handleThemeChange = (value: string | string[]) => {
+        const nextValue = Array.isArray(value) ? value[0] : value;
+        if (!nextValue) {
+            return;
+        }
+        updateStoryStyle({ theme: nextValue as 'adventure' | 'home' | 'school' });
     };
 
     const handleIslamicTeachingChange = (value: string) => {
