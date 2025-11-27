@@ -1,54 +1,16 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
-
-export interface ChildInfo {
-    name: string;
-    age: string;
-    gender: string;
-    favouritePet: string;
-    friendsName: string;
-    description: string;
-}
-
-export interface StoryValues {
-    goal: string;
-    tags: string[];
-}
-
-export interface StoryStyle {
-    length: 'short' | 'medium' | 'long';
-    theme: 'adventure' | 'home' | 'school';
-    islamicTeaching: boolean;
-}
-
-export interface CustomDescription {
-    personalDescription: string;
-    tags: string[];
-}
-
-export interface StoryData {
-    childInfo: ChildInfo;
-    storyValues: StoryValues;
-    storyStyle: StoryStyle;
-    customDescription: CustomDescription;
-    outputFormat: 'text-only' | 'illustrated-digital-book' | 'audio-version' | 'printable-pdf';
-}
-
-export interface GeneratedStory {
-    title: string;
-    content: string;
-    format: string;
-}
-
-export interface RecentStory extends GeneratedStory {
-    createdAt: string;
-}
-
-export interface StoryGenerationResponse {
-    success: boolean;
-    story?: GeneratedStory;
-    error?: string;
-}
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
+import { generateStoryAction } from '@/app/generate/actions';
+import {
+    ChildInfo,
+    StoryValues,
+    StoryStyle,
+    CustomDescription,
+    StoryData,
+    GeneratedStory,
+    RecentStory,
+    StoryGenerationResponse
+} from './story-types';
 
 interface StoryGenerationContextType {
     storyData: StoryData;
@@ -163,7 +125,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     }, [storyData]);
 
     // Add story to recent stories
-    const addToRecentStories = (story: GeneratedStory) => {
+    const addToRecentStories = useCallback((story: GeneratedStory) => {
         const newStory: RecentStory = {
             ...story,
             createdAt: new Date().toISOString(),
@@ -175,7 +137,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             // Add new story to the beginning and limit to 5 recent stories
             return [newStory, ...filteredStories].slice(0, 5);
         });
-    };
+    }, []);
 
     // Get latest story title
     const getLatestStoryTitle = useMemo(() => {
@@ -238,93 +200,41 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             sessionStorage.removeItem('generatedStory'); // Clear generated story too
         };
     }, []);
-    const selectRecentStory = useMemo(() => {
-        return (story: RecentStory) => {
-            console.log('📖 Selecting recent story:', story.title);
-            const serializedStory: GeneratedStory = {
-                title: story.title,
-                content: story.content,
-                format: story.format
-            };
-            sessionStorage.setItem('generatedStory', JSON.stringify(serializedStory));
-            setCurrentStory(serializedStory);
+    const selectRecentStory = useCallback((story: RecentStory) => {
+        const serializedStory: GeneratedStory = {
+            title: story.title,
+            content: story.content,
+            format: story.format
         };
+        sessionStorage.setItem('generatedStory', JSON.stringify(serializedStory));
+        setCurrentStory(serializedStory);
     }, []);
 
-    const generateStory = useMemo(() => {
-        return async (): Promise<StoryGenerationResponse> => {
-            setIsLoading(true);
-            setError(null);
+    const generateStory = useCallback(async (): Promise<StoryGenerationResponse> => {
+        setIsLoading(true);
+        setError(null);
 
-            try {
-                console.log('🚀 Generating story with data:', JSON.stringify(storyData, null, 2));
+        try {
+            const result = await generateStoryAction(storyData);
 
-                // Transform the data to match the backend API schema
-                const requestBody = {
-                    child_information: {
-                        name: storyData.childInfo.name,
-                        favorite_pet_name: storyData.childInfo.favouritePet || undefined,
-                        friends_names: storyData.childInfo.friendsName ? [storyData.childInfo.friendsName] : undefined,
-                        age: storyData.childInfo.age ? parseInt(storyData.childInfo.age) : undefined,
-                        gender: storyData.childInfo.gender || undefined,
-                        description: storyData.childInfo.description || undefined,
-                    },
-                    story_goal: storyData.storyValues.goal,
-                    tags: storyData.storyValues.tags,
-                    story_length: storyData.storyStyle.length,
-                    story_theme: storyData.storyStyle.theme,
-                    include_islamic_teaching: storyData.storyStyle.islamicTeaching,
-                    additional_instructions: storyData.customDescription.personalDescription || undefined,
-                };
-
-                console.log('📡 Sending request to API:', JSON.stringify(requestBody, null, 2));
-
-                // Call the actual API
-                const response = await fetch('/api/generate-story', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(requestBody),
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to generate story');
-                }
-
-                const apiResponse = await response.json();
-
-                console.log('✅ API Response received:', apiResponse);
-
-                // Save the generated story to sessionStorage for the preview page
-                const generatedStory = {
-                    title: apiResponse.title,
-                    content: apiResponse.text,
-                    format: storyData.outputFormat
-                };
-
-                sessionStorage.setItem('generatedStory', JSON.stringify(generatedStory));
-                setCurrentStory(generatedStory);
-
-                // Add to recent stories
-                addToRecentStories(generatedStory);
-
-
-                return {
-                    success: true,
-                    story: generatedStory
-                };
-            } catch (error) {
-                const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-                setError(errorMessage);
-                console.error('❌ Story generation error:', errorMessage);
-                return { success: false, error: errorMessage };
-            } finally {
-                setIsLoading(false);
+            if (result.success && result.story) {
+                sessionStorage.setItem('generatedStory', JSON.stringify(result.story));
+                setCurrentStory(result.story);
+                addToRecentStories(result.story);
+                return result;
             }
-        };
-    }, [storyData]);
+
+            const message = result.error || 'Failed to generate story';
+            setError(message);
+            return { success: false, error: message };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : 'An unknown error occurred';
+            setError(message);
+            return { success: false, error: message };
+        } finally {
+            setIsLoading(false);
+        }
+    }, [storyData, addToRecentStories]);
 
     // Memoized context value to prevent unnecessary re-renders
     const value = useMemo<StoryGenerationContextType>(() => ({
