@@ -30,26 +30,26 @@ export default function OutputFormatClient() {
     };
 
     return (
-        <div className={`h-screen max-h-screen overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
+        <div className={`h-screen max-h-screen overflow-auto md:overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
             <p className={`flex justify-start w-full text-xl font-bold px-4 ${baloo2.className}`}>
                 <span className="text-dark-red">Step 5: </span>&nbsp;Output Format
             </p>
-            <div className="w-4/5 mx-auto mb-2">
+            <div className="w-full md:w-4/5 px-4 md:px-0 mx-auto mb-2">
                 <Stepper steps={5} activeStep={5} colors={["var(--green)", "var(--orange)", "var(--yellow)", "var(--purple)", "var(--dark-red)"]} />
             </div>
-            <div className="w-4/5 mx-auto flex-1 space-y-2 mb-2">
+            <div className="w-full md:w-4/5 px-4 md:px-0 mx-auto flex-1 space-y-2 mb-2">
                 <Label htmlFor="output-format" className="font-semibold mb-10 text-3xl">Choose Output Format</Label>
                 <CardSelector
                     color="dark-red"
                     options={cardOptions}
-                    className="grid grid-cols-2 gap-12 w-4/5 mx-auto"
+                    className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 max-w-4xl mx-auto justify-items-center"
                     value={storyData.outputFormat}
                     onChange={handleFormatChange}
                     multiple
                 />
             </div>
 
-            <div className="flex justify-between items-center ">
+            <div className="flex flex-col-reverse gap-4 mt-6 md:flex-row justify-between items-center">
                 <Image
                     src="/icons/sitting-bear-icon.svg"
                     alt="Sitting Bear Icon"

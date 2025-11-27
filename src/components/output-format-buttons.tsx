@@ -54,7 +54,7 @@ export default function OutputFormatButtons() {
     }
 
     return (
-        <div className="flex items-center gap-4 mr-16">
+        <div className="flex items-center gap-4 mr-0 md:mr-16">
             <Button
                 variant="darkRedOutline"
                 className={baloo2.className}

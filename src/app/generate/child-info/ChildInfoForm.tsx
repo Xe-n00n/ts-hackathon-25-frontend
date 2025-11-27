@@ -75,7 +75,7 @@ export default function ChildInfoForm() {
     }
 
     return (
-        <div className={`h-screen max-h-screen overflow-hidden container mx-auto pt-4 pb-2 flex flex-col justify-between ${baloo2.className}`}>
+        <div className={`h-screen max-h-screen overflow-auto md:overflow-hidden container mx-auto pt-4 pb-2 flex flex-col justify-between ${baloo2.className}`}>
             <div>
                 <p className={`flex justify-start w-full text-xl font-bold px-4 ${baloo2.className}`}>
                     <span className="text-green">Step 1: </span>&nbsp;Child Info
@@ -83,7 +83,7 @@ export default function ChildInfoForm() {
                 <div className="w-4/5 mx-auto mb-2">
                     <Stepper steps={5} activeStep={1} colors={["var(--green)"]} />
                 </div>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4 w-4/5 mx-auto mt-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 w-4/5 mx-auto mt-4 md:mt-16">
                     <div className="flex flex-col">
                         <Label htmlFor="child-name" className="font-semibold mb-1">
                             Name of your child {!storyData.childInfo.name.trim() && <span className="text-red-500">*</span>}
@@ -160,7 +160,7 @@ export default function ChildInfoForm() {
                 </div>
             </div>
 
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col-reverse gap-4 mt-6 md:flex-row justify-between items-center">
                 <Image
                     src="/icons/dear-icon.svg"
                     alt="Dear Icon"

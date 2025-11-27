@@ -15,7 +15,7 @@ export default function CustomDescriptionClient() {
     };
 
     return (
-        <div className={`h-screen max-h-screen overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
+        <div className={`h-screen max-h-screen overflow-auto md:overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
             <p className={`flex justify-start w-full text-xl font-bold px-4 ${baloo2.className}`}>
                 <span className="text-purple">Step 4: </span>&nbsp;Custom Description
             </p>
@@ -33,7 +33,7 @@ export default function CustomDescriptionClient() {
                     />
                 </div>
             </div>
-            <div className="flex justify-between items-center ">
+            <div className="flex flex-col-reverse gap-4 mt-6 md:flex-row justify-between items-center">
                 <Image
                     src="/icons/owl-icon.svg"
                     alt="Owl Icon"

@@ -34,7 +34,7 @@ export default function StoryStyleClient() {
     };
 
     return (
-        <div className={`h-screen max-h-screen overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
+        <div className={`h-screen max-h-screen overflow-auto md:overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
             <p className={`flex justify-start w-full text-xl font-bold px-4 ${baloo2.className}`}>
                 <span className="text-yellow">Step 3: </span>&nbsp;Story Style
             </p>
@@ -63,7 +63,7 @@ export default function StoryStyleClient() {
                 <CardSelector
                     color="yellow"
                     options={cardOptions}
-                    className="flex gap-12 justify-center"
+                    className="flex flex-col md:flex-row gap-12 items-center md:justify-center"
                     value={storyData.storyStyle.theme}
                     onChange={handleThemeChange}
                 />
@@ -81,7 +81,7 @@ export default function StoryStyleClient() {
                     </div>
                 </RadioGroup>
             </div>
-            <div className="flex justify-between items-center ">
+            <div className="flex flex-col-reverse gap-4 mt-6 md:flex-row justify-between items-center">
                 <Image
                     src="/icons/hodge-icon.svg"
                     alt="Hodge Icon"

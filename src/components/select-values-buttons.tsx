@@ -19,7 +19,7 @@ export default function SelectValuesButtons({ isFormValid = true }: SelectValues
     };
 
     return (
-        <div className="flex items-center gap-4 mr-16">
+        <div className="flex items-center gap-4 mr-0 md:mr-16">
             <Button
                 variant="orangeOutline"
                 className={`${baloo2.className}`}

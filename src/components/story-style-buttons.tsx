@@ -15,7 +15,7 @@ export default function StoryStyleButtons() {
     };
 
     return (
-        <div className="flex items-center gap-4 mr-16">
+        <div className="flex items-center gap-4 mr-0 md:mr-16">
             <Button
                 variant="yellowOutline"
                 className={`${baloo2.className}`}
