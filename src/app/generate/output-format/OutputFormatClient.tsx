@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
 import { OutputFormatOption } from "@/lib/story-types";
 
+const REQUIRED_TEXT_OPTION: OutputFormatOption = "text-only";
+
 export default function OutputFormatClient() {
     const { storyData, updateOutputFormat } = useStoryGeneration();
 
@@ -23,10 +25,15 @@ export default function OutputFormatClient() {
             return;
         }
         if (value.length === 0) {
-            // Prevent clearing the final selection entirely
             return;
         }
-        updateOutputFormat(value as OutputFormatOption[]);
+
+        const uniqueValues = Array.from(new Set(value)) as OutputFormatOption[];
+        if (!uniqueValues.includes(REQUIRED_TEXT_OPTION)) {
+            uniqueValues.unshift(REQUIRED_TEXT_OPTION);
+        }
+
+        updateOutputFormat(uniqueValues);
     };
 
     return (

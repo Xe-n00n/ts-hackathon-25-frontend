@@ -18,6 +18,8 @@ interface StoryGenerationContextType {
     storyData: StoryData;
     recentStories: RecentStory[];
     currentStory: GeneratedStory | null;
+    getCachedAudioUrl: (title: string | null, content: string | null) => string | null;
+    cacheAudioForStory: (title: string | null, content: string | null, url: string | null) => void;
     updateChildInfo: (data: Partial<ChildInfo>) => void;
     updateStoryValues: (data: Partial<StoryValues>) => void;
     updateStoryStyle: (data: Partial<StoryStyle>) => void;
@@ -74,10 +76,13 @@ const initialStoryData: StoryData = {
 
 const StoryGenerationContext = createContext<StoryGenerationContextType | undefined>(undefined);
 
+const AUDIO_CACHE_STORAGE_KEY = 'storyAudioCache';
+
 export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     const [storyData, setStoryData] = useState<StoryData>(initialStoryData);
     const [recentStories, setRecentStories] = useState<RecentStory[]>([]);
     const [currentStory, setCurrentStory] = useState<GeneratedStory | null>(null);
+    const [audioCache, setAudioCache] = useState<Record<string, { url: string; contentSignature: string }>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasLoadedRecentStories, setHasLoadedRecentStories] = useState(false);
@@ -144,6 +149,29 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         }
     }, []);
 
+    useEffect(() => {
+        const storedAudio = sessionStorage.getItem(AUDIO_CACHE_STORAGE_KEY);
+        if (storedAudio) {
+            try {
+                const parsed: Record<string, { url: string; contentSignature?: string } | string> = JSON.parse(storedAudio);
+                const normalizedEntries = Object.entries(parsed).reduce<Record<string, { url: string; contentSignature: string }>>((acc, [title, value]) => {
+                    if (typeof value === 'string') {
+                        acc[title] = { url: value, contentSignature: '' };
+                    } else if (value && typeof value === 'object' && 'url' in value) {
+                        acc[title] = {
+                            url: value.url,
+                            contentSignature: value.contentSignature ?? '',
+                        };
+                    }
+                    return acc;
+                }, {});
+                setAudioCache(normalizedEntries);
+            } catch (error) {
+                console.error('Error loading audio cache:', error);
+            }
+        }
+    }, []);
+
     // Save data to localStorage whenever storyData changes
     useEffect(() => {
         try {
@@ -153,6 +181,14 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             setError('Failed to save data');
         }
     }, [storyData]);
+
+    useEffect(() => {
+        try {
+            sessionStorage.setItem(AUDIO_CACHE_STORAGE_KEY, JSON.stringify(audioCache));
+        } catch (error) {
+            console.error('Error saving audio cache:', error);
+        }
+    }, [audioCache]);
 
     // Add story to recent stories
     const addToRecentStories = useCallback((story: GeneratedStory) => {
@@ -173,6 +209,42 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             return [newStory, ...filteredStories].slice(0, 5);
         });
     }, []);
+
+    const buildAudioSignature = useCallback((content: string | null) => content ?? '', []);
+
+    const getCachedAudioUrl = useCallback((title: string | null, content: string | null) => {
+        if (!title) {
+            return null;
+        }
+        const entry = audioCache[title];
+        if (!entry) {
+            return null;
+        }
+        const signature = buildAudioSignature(content);
+        if (entry.contentSignature !== signature) {
+            return null;
+        }
+        return entry.url;
+    }, [audioCache, buildAudioSignature]);
+
+    const cacheAudioForStory = useCallback((title: string | null, content: string | null, url: string | null) => {
+        if (!title) {
+            return;
+        }
+
+        setAudioCache(prev => {
+            const next = { ...prev };
+            if (url) {
+                next[title] = {
+                    url,
+                    contentSignature: buildAudioSignature(content),
+                };
+            } else {
+                delete next[title];
+            }
+            return next;
+        });
+    }, [buildAudioSignature]);
 
     // Get latest story title
     const getLatestStoryTitle = useMemo(() => {
@@ -256,6 +328,8 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             setError(null);
             localStorage.removeItem('storyGenerationData');
             sessionStorage.removeItem('generatedStory'); // Clear generated story too
+            sessionStorage.removeItem(AUDIO_CACHE_STORAGE_KEY);
+            setAudioCache({});
         };
     }, []);
     const selectRecentStory = useCallback((story: RecentStory) => {
@@ -304,6 +378,8 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         storyData,
         recentStories,
         currentStory,
+        getCachedAudioUrl,
+        cacheAudioForStory,
         updateChildInfo,
         updateStoryValues,
         updateStoryStyle,
@@ -316,7 +392,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         selectRecentStory,
         isLoading,
         error,
-    }), [storyData, recentStories, currentStory, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, updateCurrentStoryContent, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
+    }), [storyData, recentStories, currentStory, getCachedAudioUrl, cacheAudioForStory, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, updateCurrentStoryContent, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
 
     return (
         <StoryGenerationContext.Provider value={value}>
