@@ -14,13 +14,7 @@ import { GeneratedStory } from "@/lib/story-types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { AudioPlayer } from "@/components/audio/audio-player";
-import { generateAudioAction } from "@/app/generate/actions";
-import {
-    DropdownMenu,
-    DropdownMenuTrigger,
-    DropdownMenuContent,
-    DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+import { generateAudioAction, generateIllustrationsAction } from "@/app/generate/actions";
 import { Download, Loader2 } from "lucide-react";
 import { jsPDF } from "jspdf";
 import Image from "next/image";
@@ -61,7 +55,9 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
     const [isAudioExporting, setIsAudioExporting] = useState(false);
     const { getCachedAudioUrl, cacheAudioForStory } = useStoryGeneration();
     const cachedAudioUrl = story ? getCachedAudioUrl(story.title, story.content) : null;
-    const isImage = true;
+    const hasIllustratedFormat = Boolean(story?.format?.includes("illustrated-digital-book"));
+    const [illustrationUrls, setIllustrationUrls] = useState<string[]>([]);
+    const [isFetchingIllustrations, setIsFetchingIllustrations] = useState(false);
     const [isSmallOrMedium, setIsSmallOrMedium] = useState(() => {
         if (typeof window === "undefined") {
             return true;
@@ -84,8 +80,62 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
         };
     }, []);
 
-    const shouldSplitPages = isImage && isSmallOrMedium;
-    const showSideImage = isImage && !shouldSplitPages;
+    useEffect(() => {
+        if (!story || !hasIllustratedFormat) {
+            setIllustrationUrls([]);
+            setIsFetchingIllustrations(false);
+            return;
+        }
+
+        let cancelled = false;
+        setIsFetchingIllustrations(true);
+        void generateIllustrationsAction({ title: story.title, content: story.content })
+            .then(result => {
+                if (cancelled) {
+                    return;
+                }
+                if (result.success && Array.isArray(result.images)) {
+                    setIllustrationUrls(result.images);
+                } else {
+                    setIllustrationUrls([]);
+                }
+            })
+            .catch((error: unknown) => {
+                console.error("Failed to fetch illustrations", error);
+                if (!cancelled) {
+                    setIllustrationUrls([]);
+                }
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setIsFetchingIllustrations(false);
+                }
+            });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [story, hasIllustratedFormat]);
+
+    const getIllustrationSrc = useCallback((index: number) => {
+        return illustrationUrls[index] || "/scene_0_0.png";
+    }, [illustrationUrls]);
+
+    const canShowIllustrations = hasIllustratedFormat && illustrationUrls.length > 0;
+    const shouldSplitPages = hasIllustratedFormat && isSmallOrMedium;
+    const showSideImage = hasIllustratedFormat && !shouldSplitPages;
+    const shouldShowIllustrationLoader = !canShowIllustrations && isFetchingIllustrations;
+
+    useEffect(() => {
+        setSelectedIndex(prev => {
+            const totalPages = pageContents.length;
+            if (!totalPages) {
+                return 0;
+            }
+            const maxIndex = shouldSplitPages ? totalPages * 2 - 1 : totalPages - 1;
+            return Math.min(prev, Math.max(0, maxIndex));
+        });
+    }, [shouldSplitPages, pageContents]);
 
     const basePages = useMemo(() => {
         return pageContents.map((pageContent, index) => ({
@@ -136,6 +186,9 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
 
     const hasEditablePage = Boolean(story && basePages.length);
     const isCurrentImagePage = shouldSplitPages && currentDisplayPage?.kind === "image";
+    const currentIllustrationSrc = isCurrentImagePage || showSideImage
+        ? getIllustrationSrc(currentDisplayPage?.baseIndex ?? 0)
+        : null;
 
     const handlePageSelect = useCallback((index: number) => {
         setSelectedIndex(index);
@@ -207,9 +260,24 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 >
                     <div className="text-xs overflow-hidden flex-1">
                         {page.kind === "image" ? (
-                            <div className="w-full h-full flex items-center justify-center bg-neutral-100 rounded-lg">
-                                <span className="text-dark-red font-semibold">Image</span>
-                            </div>
+                            canShowIllustrations ? (
+                                <Image
+                                    src={getIllustrationSrc(page.baseIndex)}
+                                    alt="Story page illustration"
+                                    width={160}
+                                    height={120}
+                                    className="w-full h-full object-cover rounded-lg"
+                                    unoptimized
+                                />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-neutral-100 rounded-lg">
+                                    {isFetchingIllustrations ? (
+                                        <Loader2 className="h-4 w-4 animate-spin text-dark-red" />
+                                    ) : (
+                                        <span className="text-dark-red font-semibold">Image</span>
+                                    )}
+                                </div>
+                            )
                         ) : (
                             <p className="break-words whitespace-pre-wrap leading-tight text-ellipsis overflow-hidden h-full">
                                 {page.preview}
@@ -222,7 +290,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 </div>
             </CarouselItem>
         ));
-    }, [displayPages, selectedIndex, handlePageSelect]);
+    }, [displayPages, selectedIndex, handlePageSelect, canShowIllustrations, getIllustrationSrc, isFetchingIllustrations]);
 
     const storyTitle = story?.title || "Hikaaya Story";
     const showAudioPlayer = Boolean(
@@ -232,8 +300,9 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
     );
     const formatSelections = story?.format ?? [];
     const hasTextOnlySelection = formatSelections.length === 1 && formatSelections[0] === "text-only";
-    const hasTextAndAudioSelection = formatSelections.includes("text-only") && formatSelections.includes("audio-version");
+    const hasAudioOnlySelection = formatSelections.length === 1 && formatSelections[0] === "audio-version";
     const safeTitle = useMemo(() => (story?.title || "hikaya-story").replace(/[\\/:*?"<>|]/g, "_"), [story?.title]);
+    const audioPlayerWidthClass = hasAudioOnlySelection ? "md:w-4/5" : "md:w-2/4";
 
     const handleExportPdf = useCallback(async () => {
         if (!story) {
@@ -322,11 +391,6 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
         }
     }, [cacheAudioForStory, cachedAudioUrl, safeTitle, story]);
 
-    const handleExportBoth = useCallback(async () => {
-        await handleExportAudio();
-        await handleExportPdf();
-    }, [handleExportAudio, handleExportPdf]);
-
     return (
         <div
             className={`h-screen container mx-auto flex flex-col overflow-hidden md:overflow-auto overflow-y-auto ${baloo2.className}`}
@@ -359,134 +423,136 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                             Export PDF
                         </Button>
                     )}
-                    {hasTextAndAudioSelection && (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="bg-white text-dark-red hover:bg-white/90 flex items-center gap-2 text-xl"
-                                    disabled={isAudioExporting}
-                                >
-                                    {isAudioExporting ? (
-                                        <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                        <Download className="h-4 w-4" />
-                                    )}
-                                    Export
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => { void handleExportPdf(); }}>
-                                    Export PDF
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => { void handleExportAudio(); }} disabled={isAudioExporting}>
-                                    Export Audio
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={() => { void handleExportBoth(); }} disabled={isAudioExporting}>
-                                    Export Both
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                    {hasAudioOnlySelection && (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="bg-white text-dark-red hover:bg-white/90 flex items-center gap-2 text-lg"
+                            onClick={handleExportAudio}
+                            disabled={isAudioExporting}
+                        >
+                            {isAudioExporting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Download className="h-4 w-4" />
+                            )}
+                            Export Audio
+                        </Button>
                     )}
                 </div>
-                <div className="flex flex-col bg-white w-2/4 mx-auto h-3/4 md:h-1/2 lg:h-[34rem] w-3/4 shadow-xl/20 p-4 rounded-xl text-xl">
-                    <div className={`flex w-full flex-1 ${showSideImage ? "flex-col md:flex-row gap-4" : ""}`}>
-                        {isCurrentImagePage ? (
-                            <div className="w-full h-full flex items-center justify-center">
-                                <Image
-                                    src="/scene_0_0.png"
-                                    width={480}
-                                    height={360}
-                                    alt="Story illustration"
-                                    className="w-full h-full max-h-[360px] object-cover rounded-xl border border-dark-red/20"
-                                />
-                            </div>
-                        ) : (
-                            <Textarea
-                                className="flex-1 w-full h-full resize-none border border-dark-red/30 rounded-lg p-4 text-xl md:text-2xl leading-relaxed break-words whitespace-pre-wrap"
-                                value={currentPageContent}
-                                onChange={(event) => handlePageTextChange(event.target.value)}
-                                readOnly={!hasEditablePage || !isEditing}
-                                aria-readonly={!hasEditablePage || !isEditing}
-                            />
-                        )}
-                        {showSideImage && (
-                            <div className="hidden md:flex flex-1 flex-shrink-0 items-center justify-center">
-                                <Image
-                                    src="/scene_0_0.png"
-                                    width={420}
-                                    height={420}
-                                    alt="Story illustration"
-                                    className="w-full h-full max-h-[340px] object-cover rounded-xl border border-dark-red/20"
-                                />
-                            </div>
-                        )}
-                    </div>
-                    <div className="flex w-full items-center justify-between mt-4">
-                        <p className="text-2xl text-dark-red font-bold">
-                            {currentDisplayPage?.pageNumber ?? 1}
-                        </p>
-                        <div className="flex gap-3">
-                            {!isEditing ? (
-                                <Button
-                                    variant="darkRed"
-                                    size="sm"
-                                    onClick={handleStartEditing}
-                                    disabled={!hasEditablePage || isCurrentImagePage}
-                                >
-                                    Edit
-                                </Button>
+                {!hasAudioOnlySelection && (
+                    <div className="flex flex-col bg-white w-2/4 mx-auto h-3/4 md:h-1/2 lg:h-[34rem] w-3/4 shadow-xl/20 p-4 rounded-xl text-xl">
+                        <div className={`flex w-full flex-1 ${showSideImage ? "flex-col md:flex-row gap-4" : ""}`}>
+                            {isCurrentImagePage ? (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    {shouldShowIllustrationLoader ? (
+                                        <Loader2 className="h-8 w-8 animate-spin text-dark-red" />
+                                    ) : currentIllustrationSrc ? (
+                                        <Image
+                                            src={currentIllustrationSrc}
+                                            width={480}
+                                            height={360}
+                                            alt="Story illustration"
+                                            className="w-full h-full max-h-[360px] object-cover rounded-xl border border-dark-red/20"
+                                            unoptimized
+                                        />
+                                    ) : null}
+                                </div>
                             ) : (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleResetChanges}
-                                        disabled={!hasUnsavedChanges || !hasEditablePage}
-                                    >
-                                        Reset
-                                    </Button>
+                                <Textarea
+                                    className="flex-1 w-full h-full resize-none border border-dark-red/30 rounded-lg p-4 text-xl md:text-2xl leading-relaxed break-words whitespace-pre-wrap"
+                                    value={currentPageContent}
+                                    onChange={(event) => handlePageTextChange(event.target.value)}
+                                    readOnly={!hasEditablePage || !isEditing}
+                                    aria-readonly={!hasEditablePage || !isEditing}
+                                />
+                            )}
+                            {showSideImage && (
+                                <div className="hidden md:flex flex-1 flex-shrink-0 items-center justify-center">
+                                    {shouldShowIllustrationLoader ? (
+                                        <Loader2 className="h-6 w-6 animate-spin text-dark-red" />
+                                    ) : currentIllustrationSrc ? (
+                                        <Image
+                                            src={currentIllustrationSrc}
+                                            width={420}
+                                            height={420}
+                                            alt="Story illustration"
+                                            className="w-full h-full max-h-[340px] object-cover rounded-xl border border-dark-red/20"
+                                            unoptimized
+                                        />
+                                    ) : null}
+                                </div>
+                            )}
+                        </div>
+                        <div className="flex w-full items-center justify-between mt-4">
+                            <p className="text-2xl text-dark-red font-bold">
+                                {currentDisplayPage?.pageNumber ?? 1}
+                            </p>
+                            <div className="flex gap-3">
+                                {!isEditing ? (
                                     <Button
                                         variant="darkRed"
                                         size="sm"
-                                        onClick={handleSaveChanges}
-                                        disabled={!hasUnsavedChanges || !hasEditablePage}
+                                        onClick={handleStartEditing}
+                                        disabled={!hasEditablePage || isCurrentImagePage}
                                     >
-                                        Save
+                                        Edit
                                     </Button>
-                                </>
-                            )}
+                                ) : (
+                                    <>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleResetChanges}
+                                            disabled={!hasUnsavedChanges || !hasEditablePage}
+                                        >
+                                            Reset
+                                        </Button>
+                                        <Button
+                                            variant="darkRed"
+                                            size="sm"
+                                            onClick={handleSaveChanges}
+                                            disabled={!hasUnsavedChanges || !hasEditablePage}
+                                        >
+                                            Save
+                                        </Button>
+                                    </>
+                                )}
+                            </div>
                         </div>
-                    </div>
-                </div>
-
-                {showAudioPlayer && story && (
-                    <div className="w-full px-2 md:w-2/4 md:px-0 mx-auto">
-                        <AudioPlayer
-                            storyTitle={story.title}
-                            storyContent={story.content}
-                            cachedAudioUrl={cachedAudioUrl}
-                            onAudioCached={(url) => {
-                                if (!story) {
-                                    return;
-                                }
-                                cacheAudioForStory(story.title, story.content, url);
-                            }}
-                        />
                     </div>
                 )}
 
-                <div className="w-1/2 md:w-4/6 lg:w-full max-w-5xl mx-auto">
-                    <Carousel opts={{ align: "start", slidesToScroll: 1 }} className="w-full mb-0 md:mb-4">
-                        <CarouselContent className="flex gap-x-2 justify-start items-center m-0">
-                            {carouselItems}
-                        </CarouselContent>
-                        <CarouselPrevious />
-                        <CarouselNext />
-                    </Carousel>
-                </div>
+                {showAudioPlayer && story && (
+                    <div className={hasAudioOnlySelection ? "flex flex-1 w-full items-center justify-center" : "w-full"}>
+                        <div className={`w-full px-2 ${audioPlayerWidthClass} md:px-0 mx-auto ${hasAudioOnlySelection ? "max-w-2xl" : ""}`}>
+                            <AudioPlayer
+                                storyTitle={story.title}
+                                storyContent={story.content}
+                                cachedAudioUrl={cachedAudioUrl}
+                                onAudioCached={(url) => {
+                                    if (!story) {
+                                        return;
+                                    }
+                                    cacheAudioForStory(story.title, story.content, url);
+                                }}
+                            />
+                        </div>
+                    </div>
+                )}
+
+                {!hasAudioOnlySelection && (
+                    <div className="w-1/2 md:w-4/6 lg:w-full max-w-5xl mx-auto">
+                        <Carousel opts={{ align: "start", slidesToScroll: 1 }} className="w-full mb-0 md:mb-4">
+                            <CarouselContent className="flex gap-x-2 justify-start items-center m-0">
+                                {carouselItems}
+                            </CarouselContent>
+                            <CarouselPrevious />
+                            <CarouselNext />
+                        </Carousel>
+                    </div>
+                )}
             </div>
         </div>
     );

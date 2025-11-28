@@ -18,6 +18,12 @@ export interface GenerateAudioResult {
     error?: string;
 }
 
+export interface GenerateIllustrationsResult {
+    success: boolean;
+    images?: string[];
+    error?: string;
+}
+
 interface BackendRequestBody {
     child_information: {
         name: string;
@@ -39,6 +45,10 @@ interface BackendRequestBody {
 interface BackendResponse {
     title: string;
     text: string;
+}
+
+interface IllustrationResponse {
+    images: string[];
 }
 
 function mapStoryDataToRequest(storyData: StoryData): BackendRequestBody {
@@ -70,7 +80,7 @@ export async function generateStoryAction(storyData: StoryData): Promise<Generat
     const requestBody = mapStoryDataToRequest(storyData);
 
     try {
-        const response = await fetch('https://ts-hackathon-25-backend.onrender.com/generate', {
+        const response = await fetch('https://ts-hackathon-25-backend.onrender.com/story/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody),
@@ -107,7 +117,7 @@ export async function generateAudioAction(input: { title: string; content: strin
             title: input.title,
             text: input.content,
         });
-        const response = await fetch(`https://ts-hackathon-25-backend.onrender.com/stream?${params.toString()}`, {
+        const response = await fetch(`https://ts-hackathon-25-backend.onrender.com/narration/stream?${params.toString()}`, {
             method: 'GET',
             cache: 'no-store',
         });
@@ -130,5 +140,35 @@ export async function generateAudioAction(input: { title: string; content: strin
     } catch (error) {
         console.error('Failed to call generateAudioAction', error);
         return { success: false, error: 'Unexpected error generating audio' };
+    }
+}
+
+export async function generateIllustrationsAction(input: { title: string; content: string; }): Promise<GenerateIllustrationsResult> {
+    if (!input.title || !input.content) {
+        return { success: false, error: 'Missing story data for illustrations' };
+    }
+
+    try {
+        const response = await fetch('https://ts-hackathon-25-backend.onrender.com/generate-illustrations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                title: input.title,
+                text: input.content,
+            }),
+            cache: 'no-store',
+        });
+
+        if (!response.ok) {
+            const errorPayload = await response.json().catch(() => ({ error: 'Failed to fetch illustrations' }));
+            return { success: false, error: errorPayload.error || 'Failed to fetch illustrations' };
+        }
+
+        const data: IllustrationResponse = await response.json();
+        const images = Array.isArray(data.images) ? data.images : [];
+        return { success: true, images };
+    } catch (error) {
+        console.error('Failed to call generateIllustrationsAction', error);
+        return { success: false, error: 'Unexpected error generating illustrations' };
     }
 }

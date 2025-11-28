@@ -6,6 +6,8 @@ type CardOption = {
     value: string;
     label: string;
     emoji: string;
+    disabled?: boolean;
+    helperText?: string;
 };
 
 interface CardSelectorProps {
@@ -57,17 +59,28 @@ export function CardSelector({
         <div className={className} role={isMultiple ? "group" : "radiogroup"}>
             {options.map(opt => {
                 const optionSelected = isSelected(opt.value);
+                const isDisabled = Boolean(opt.disabled);
                 return (
                     <button
                         type="button"
                         key={opt.value}
-                        onClick={() => handleSelection(opt.value)}
-                        className={`relative w-48 h-24 rounded-[24px] shadow-lg bg-background cursor-pointer flex flex-col items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 }`}
+                        onClick={() => {
+                            if (!isDisabled) {
+                                handleSelection(opt.value);
+                            }
+                        }}
+                        className={`relative w-48 h-24 rounded-[24px] shadow-lg ${isDisabled ? "bg-gray-100 cursor-not-allowed opacity-70" : "bg-background cursor-pointer"} flex flex-col items-center justify-center transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2`}
                         aria-pressed={optionSelected}
                         aria-label={opt.label}
+                        disabled={isDisabled}
                     >
                         <span className="text-2xl" aria-hidden="true">{opt.emoji}</span>
                         <span className="mt-4 text-md font-semibold">{opt.label}</span>
+                        {opt.helperText && (
+                            <span className="text-xs mt-1 text-gray-500 text-center px-2">
+                                {opt.helperText}
+                            </span>
+                        )}
                         {optionSelected && (
                             <span className="absolute -top-4 -right-4 p-2">
                                 {color === "yellow" ? (
