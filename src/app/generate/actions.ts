@@ -2,6 +2,7 @@
 
 import { StoryData } from '@/lib/story-types';
 
+const STORY_API_URL = process.env.HIKAAYA_API_URL;
 export interface GenerateStoryResult {
     success: boolean;
     story?: {
@@ -80,7 +81,7 @@ export async function generateStoryAction(storyData: StoryData): Promise<Generat
     const requestBody = mapStoryDataToRequest(storyData);
 
     try {
-        const response = await fetch('https://ts-hackathon-25-backend.onrender.com/story/generate', {
+        const response = await fetch(`${STORY_API_URL}/story/generate`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody),
@@ -117,7 +118,7 @@ export async function generateAudioAction(input: { title: string; content: strin
             title: input.title,
             text: input.content,
         });
-        const response = await fetch(`https://ts-hackathon-25-backend.onrender.com/narration/stream?${params.toString()}`, {
+        const response = await fetch(`${STORY_API_URL}/narration/stream?${params.toString()}`, {
             method: 'GET',
             cache: 'no-store',
         });
@@ -149,7 +150,7 @@ export async function generateIllustrationsAction(input: { title: string; conten
     }
 
     try {
-        const response = await fetch('https://ts-hackathon-25-backend.onrender.com/generate-illustrations', {
+        const response = await fetch(`${STORY_API_URL}/generate-illustrations`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
