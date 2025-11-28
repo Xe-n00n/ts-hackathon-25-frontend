@@ -1,8 +1,14 @@
 'use server';
 
+import JSZip from 'jszip';
 import { StoryData } from '@/lib/story-types';
+const API_BASE_URL = process.env.HIKAYA_API_BASE_URL
+    ?? process.env.HIKAAYA_API_URL
+    ?? 'https://ts-hackathon-25-backend.onrender.com';
+const STORY_API_URL = `${API_BASE_URL}/story/generate`;
+const AUDIO_API_URL = `${API_BASE_URL}/narration/stream`;
+const ILLUSTRATION_API_URL = `${API_BASE_URL}/illustration/generate`;
 
-const STORY_API_URL = process.env.HIKAAYA_API_URL;
 export interface GenerateStoryResult {
     success: boolean;
     story?: {
@@ -81,7 +87,7 @@ export async function generateStoryAction(storyData: StoryData): Promise<Generat
     const requestBody = mapStoryDataToRequest(storyData);
 
     try {
-        const response = await fetch(`${STORY_API_URL}/story/generate`, {
+        const response = await fetch(STORY_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(requestBody),
@@ -118,7 +124,7 @@ export async function generateAudioAction(input: { title: string; content: strin
             title: input.title,
             text: input.content,
         });
-        const response = await fetch(`${STORY_API_URL}/narration/stream?${params.toString()}`, {
+        const response = await fetch(`${AUDIO_API_URL}?${params.toString()}`, {
             method: 'GET',
             cache: 'no-store',
         });
@@ -145,29 +151,59 @@ export async function generateAudioAction(input: { title: string; content: strin
 }
 
 export async function generateIllustrationsAction(input: { title: string; content: string; }): Promise<GenerateIllustrationsResult> {
-    if (!input.title || !input.content) {
+    if (!input.content) {
         return { success: false, error: 'Missing story data for illustrations' };
     }
 
     try {
-        const response = await fetch(`${STORY_API_URL}/generate-illustrations`, {
+        const response = await fetch(ILLUSTRATION_API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                title: input.title,
                 text: input.content,
             }),
             cache: 'no-store',
         });
-
         if (!response.ok) {
             const errorPayload = await response.json().catch(() => ({ error: 'Failed to fetch illustrations' }));
             return { success: false, error: errorPayload.error || 'Failed to fetch illustrations' };
         }
 
-        const data: IllustrationResponse = await response.json();
-        const images = Array.isArray(data.images) ? data.images : [];
-        return { success: true, images };
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/zip')) {
+            const zipBuffer = await response.arrayBuffer();
+            const zip = await JSZip.loadAsync(zipBuffer);
+            const entries = Object.values(zip.files).filter(file => !file.dir && /\.(png|jpe?g|webp|gif)$/i.test(file.name));
+
+            if (!entries.length) {
+                console.warn('Illustration ZIP contained no image files. Available entries:', Object.keys(zip.files));
+                return { success: false, error: 'No illustrations returned from backend' };
+            }
+
+            const images = await Promise.all(entries.map(async (file) => {
+                const extension = file.name.split('.').pop()?.toLowerCase();
+                const mime = extension === 'jpg' || extension === 'jpeg'
+                    ? 'image/jpeg'
+                    : extension === 'webp'
+                        ? 'image/webp'
+                        : extension === 'gif'
+                            ? 'image/gif'
+                            : 'image/png';
+                const base64 = await file.async('base64');
+                return `data:${mime};base64,${base64}`;
+            }));
+            return { success: true, images };
+        }
+
+        const rawText = await response.text();
+        try {
+            const data: IllustrationResponse = JSON.parse(rawText);
+            const images = Array.isArray(data.images) ? data.images : [];
+            return { success: true, images };
+        } catch (parseError) {
+            console.error('Illustration endpoint returned unexpected payload:', rawText, parseError);
+            return { success: false, error: 'Illustration service returned an unexpected response' };
+        }
     } catch (error) {
         console.error('Failed to call generateIllustrationsAction', error);
         return { success: false, error: 'Unexpected error generating illustrations' };

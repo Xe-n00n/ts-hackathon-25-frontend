@@ -53,7 +53,12 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [isPdfExporting, setIsPdfExporting] = useState(false);
     const [isAudioExporting, setIsAudioExporting] = useState(false);
-    const { getCachedAudioUrl, cacheAudioForStory } = useStoryGeneration();
+    const {
+        getCachedAudioUrl,
+        cacheAudioForStory,
+        getCachedIllustrations,
+        cacheIllustrationsForStory,
+    } = useStoryGeneration();
     const cachedAudioUrl = story ? getCachedAudioUrl(story.title, story.content) : null;
     const hasIllustratedFormat = Boolean(story?.format?.includes("illustrated-digital-book"));
     const [illustrationUrls, setIllustrationUrls] = useState<string[]>([]);
@@ -87,6 +92,13 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
             return;
         }
 
+        const cachedImages = getCachedIllustrations(story.title, story.content);
+        if (cachedImages?.length) {
+            setIllustrationUrls(cachedImages);
+            setIsFetchingIllustrations(false);
+            return;
+        }
+
         let cancelled = false;
         setIsFetchingIllustrations(true);
         void generateIllustrationsAction({ title: story.title, content: story.content })
@@ -96,14 +108,17 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 }
                 if (result.success && Array.isArray(result.images)) {
                     setIllustrationUrls(result.images);
+                    cacheIllustrationsForStory(story.title, story.content, result.images);
                 } else {
                     setIllustrationUrls([]);
+                    cacheIllustrationsForStory(story.title, story.content, null);
                 }
             })
             .catch((error: unknown) => {
                 console.error("Failed to fetch illustrations", error);
                 if (!cancelled) {
                     setIllustrationUrls([]);
+                    cacheIllustrationsForStory(story.title, story.content, null);
                 }
             })
             .finally(() => {
@@ -115,7 +130,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
         return () => {
             cancelled = true;
         };
-    }, [story, hasIllustratedFormat]);
+    }, [story, hasIllustratedFormat, getCachedIllustrations, cacheIllustrationsForStory]);
 
     const getIllustrationSrc = useCallback((index: number) => {
         return illustrationUrls[index] || "/scene_0_0.png";
@@ -219,9 +234,10 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
 
         onSaveContent(pageContents.join("\n\n"));
         cacheAudioForStory(story.title, story.content, null);
+        cacheIllustrationsForStory(story.title, story.content, null);
         setHasUnsavedChanges(false);
         setIsEditing(false);
-    }, [story, pageContents, onSaveContent, cacheAudioForStory]);
+    }, [story, pageContents, onSaveContent, cacheAudioForStory, cacheIllustrationsForStory]);
 
     const handleResetChanges = useCallback(() => {
         if (!story) {
@@ -264,8 +280,8 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                                 <Image
                                     src={getIllustrationSrc(page.baseIndex)}
                                     alt="Story page illustration"
-                                    width={160}
-                                    height={120}
+                                    width={100}
+                                    height={100}
                                     className="w-full h-full object-cover rounded-lg"
                                     unoptimized
                                 />
@@ -300,7 +316,9 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
     );
     const formatSelections = story?.format ?? [];
     const hasTextOnlySelection = formatSelections.length === 1 && formatSelections[0] === "text-only";
+    const hasIllustratedSelection = formatSelections.length === 1 && formatSelections[0] === "illustrated-digital-book";
     const hasAudioOnlySelection = formatSelections.length === 1 && formatSelections[0] === "audio-version";
+    const canExportPdf = hasTextOnlySelection || hasIllustratedSelection;
     const safeTitle = useMemo(() => (story?.title || "hikaya-story").replace(/[\\/:*?"<>|]/g, "_"), [story?.title]);
     const audioPlayerWidthClass = hasAudioOnlySelection ? "md:w-4/5" : "md:w-2/4";
 
@@ -312,8 +330,10 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
         try {
             const doc = new jsPDF({ orientation: "landscape", unit: "pt", format: "a4" });
             const margin = 48;
-            const pageWidth = doc.internal.pageSize.getWidth() - margin * 2;
-            const pageHeight = doc.internal.pageSize.getHeight() - margin;
+            const fullWidth = doc.internal.pageSize.getWidth();
+            const fullHeight = doc.internal.pageSize.getHeight();
+            const pageWidth = fullWidth - margin * 2;
+            const pageHeight = fullHeight - margin;
 
             const addPageHeader = () => {
                 doc.setFont("helvetica", "bold");
@@ -331,24 +351,109 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 .map(paragraph => paragraph.trim())
                 .filter(Boolean);
 
-            paragraphs.forEach((paragraph, index) => {
+            const hasIllustrations = hasIllustratedFormat && illustrationUrls.length > 0;
+            const rawImageHeight = fullHeight - margin * 2 - 120;
+            const imageHeight = hasIllustrations
+                ? Math.max(160, Math.min(280, rawImageHeight))
+                : 0;
+            const imageWidth = hasIllustrations
+                ? Math.min(pageWidth * 0.65, pageWidth)
+                : pageWidth;
+            const imageGap = hasIllustrations ? 24 : 0;
+
+            const getImageFormat = (src: string) => {
+                if (src.startsWith("data:image/png")) return "PNG";
+                if (src.startsWith("data:image/jpeg") || src.startsWith("data:image/jpg")) return "JPEG";
+                if (src.startsWith("data:image/webp")) return "WEBP";
+                if (src.startsWith("data:image/gif")) return "GIF";
+                return "PNG";
+            };
+
+            const renderParagraph = (paragraph: string, index: number) => {
                 if (index > 0) {
                     doc.addPage("a4", "landscape");
                 }
+
+                const imageSrc = hasIllustrations ? illustrationUrls[index] ?? null : null;
+                const imagePageNumber = doc.getNumberOfPages();
                 addPageHeader();
 
+                const reservedHeight = imageSrc ? imageHeight + imageGap : 0;
                 let cursorY = margin + 30;
+                let textBottomLimit = imageSrc
+                    ? Math.max(margin + 40, fullHeight - margin - reservedHeight)
+                    : pageHeight;
+
                 const lines = doc.splitTextToSize(paragraph.replace(/\n/g, " "), pageWidth);
                 lines.forEach((line: string) => {
-                    if (cursorY > pageHeight) {
+                    if (cursorY > textBottomLimit) {
                         doc.addPage("a4", "landscape");
                         addPageHeader();
                         cursorY = margin + 30;
+                        textBottomLimit = pageHeight;
                     }
                     doc.text(line, margin, cursorY);
                     cursorY += 18;
                 });
-            });
+
+                if (imageSrc && imageSrc.startsWith("data:image")) {
+                    const lastPageNumber = doc.getNumberOfPages();
+                    const imageY = fullHeight - margin - imageHeight;
+                    try {
+                        doc.setPage(imagePageNumber);
+                        const centeredX = margin + (pageWidth - imageWidth) / 2;
+                        doc.addImage(
+                            imageSrc,
+                            getImageFormat(imageSrc),
+                            centeredX,
+                            imageY,
+                            imageWidth,
+                            imageHeight
+                        );
+                    } catch (imageError) {
+                        console.error(`Failed to add illustration ${index + 1} to PDF`, imageError);
+                    } finally {
+                        doc.setPage(lastPageNumber);
+                    }
+                }
+            };
+
+            if (paragraphs.length) {
+                paragraphs.forEach((paragraph, index) => {
+                    renderParagraph(paragraph, index);
+                });
+            } else {
+                addPageHeader();
+            }
+
+            if (hasIllustrations && illustrationUrls.length > paragraphs.length) {
+                const extraImages = illustrationUrls.slice(paragraphs.length);
+                extraImages.forEach((imageSrc, extraIndex) => {
+                    if (!imageSrc.startsWith("data:image")) {
+                        return;
+                    }
+                    const reuseInitialPage = paragraphs.length === 0 && extraIndex === 0;
+                    if (!reuseInitialPage) {
+                        doc.addPage("a4", "landscape");
+                        addPageHeader();
+                    }
+                    const imageY = margin + 30;
+                    try {
+                        const maxHeight = Math.min(imageHeight || pageHeight - 60, pageHeight - 60);
+                        const centeredX = margin + (pageWidth - imageWidth) / 2;
+                        doc.addImage(
+                            imageSrc,
+                            getImageFormat(imageSrc),
+                            centeredX,
+                            imageY,
+                            imageWidth,
+                            maxHeight
+                        );
+                    } catch (imageError) {
+                        console.error("Failed to add extra illustration to PDF", imageError);
+                    }
+                });
+            }
 
             doc.save(`${safeTitle}.pdf`);
         } catch (error) {
@@ -356,7 +461,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
         } finally {
             setIsPdfExporting(false);
         }
-    }, [safeTitle, story]);
+    }, [hasIllustratedFormat, illustrationUrls, safeTitle, story]);
 
     const handleExportAudio = useCallback(async () => {
         if (!story) {
@@ -406,12 +511,12 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                     <p className="text-xl md:text-2xl text-white font-semibold truncate">
                         {storyTitle || "Your Story Preview"}
                     </p>
-                    {hasTextOnlySelection && (
+                    {canExportPdf && (
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            className="bg-white text-dark-red hover:bg-white/90 flex items-center gap-2 text-lg"
+                            className="bg-white text-dark-red hover:bg-white/90 flex items-center gap-2 text-lg mr-4 md:mr-8 lg:mr-4"
                             onClick={handleExportPdf}
                             disabled={isPdfExporting}
                         >
@@ -442,10 +547,10 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                     )}
                 </div>
                 {!hasAudioOnlySelection && (
-                    <div className="flex flex-col bg-white w-2/4 mx-auto h-3/4 md:h-1/2 lg:h-[34rem] w-3/4 shadow-xl/20 p-4 rounded-xl text-xl">
-                        <div className={`flex w-full flex-1 ${showSideImage ? "flex-col md:flex-row gap-4" : ""}`}>
+                    <div className="flex flex-col bg-white w-11/12 md:w-4/5 lg:w-2/3 mx-auto h-[70vh] md:h-[80vh] lg:h-[34rem] shadow-xl/20 p-4 rounded-xl text-xl">
+                        <div className={`flex w-full flex-1 ${showSideImage ? "flex-col lg:flex-row gap-4" : ""}`}>
                             {isCurrentImagePage ? (
-                                <div className="w-full h-full flex items-center justify-center">
+                                <div className="w-full h-full flex items-center justify-center overflow-hidden">
                                     {shouldShowIllustrationLoader ? (
                                         <Loader2 className="h-8 w-8 animate-spin text-dark-red" />
                                     ) : currentIllustrationSrc ? (
@@ -454,7 +559,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                                             width={480}
                                             height={360}
                                             alt="Story illustration"
-                                            className="w-full h-full max-h-[360px] object-cover rounded-xl border border-dark-red/20"
+                                            className="w-full h-full object-contain lg:object-cover rounded-xl border border-dark-red/20"
                                             unoptimized
                                         />
                                     ) : null}
@@ -469,7 +574,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                                 />
                             )}
                             {showSideImage && (
-                                <div className="hidden md:flex flex-1 flex-shrink-0 items-center justify-center">
+                                <div className="hidden md:flex lg:flex md:flex-col lg:flex-row flex-1 flex-shrink-0 h-full items-center justify-center overflow-hidden gap-4">
                                     {shouldShowIllustrationLoader ? (
                                         <Loader2 className="h-6 w-6 animate-spin text-dark-red" />
                                     ) : currentIllustrationSrc ? (
@@ -478,7 +583,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                                             width={420}
                                             height={420}
                                             alt="Story illustration"
-                                            className="w-full h-full max-h-[340px] object-cover rounded-xl border border-dark-red/20"
+                                            className="w-full h-full object-contain lg:object-cover rounded-xl border border-dark-red/20"
                                             unoptimized
                                         />
                                     ) : null}

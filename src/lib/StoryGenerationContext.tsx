@@ -20,6 +20,8 @@ interface StoryGenerationContextType {
     currentStory: GeneratedStory | null;
     getCachedAudioUrl: (title: string | null, content: string | null) => string | null;
     cacheAudioForStory: (title: string | null, content: string | null, url: string | null) => void;
+    getCachedIllustrations: (title: string | null, content: string | null) => string[] | null;
+    cacheIllustrationsForStory: (title: string | null, content: string | null, images: string[] | null) => void;
     updateChildInfo: (data: Partial<ChildInfo>) => void;
     updateStoryValues: (data: Partial<StoryValues>) => void;
     updateStoryStyle: (data: Partial<StoryStyle>) => void;
@@ -77,12 +79,14 @@ const initialStoryData: StoryData = {
 const StoryGenerationContext = createContext<StoryGenerationContextType | undefined>(undefined);
 
 const AUDIO_CACHE_STORAGE_KEY = 'storyAudioCache';
+const ILLUSTRATION_CACHE_STORAGE_KEY = 'storyIllustrationCache';
 
 export function StoryGenerationProvider({ children }: { children: ReactNode }) {
     const [storyData, setStoryData] = useState<StoryData>(initialStoryData);
     const [recentStories, setRecentStories] = useState<RecentStory[]>([]);
     const [currentStory, setCurrentStory] = useState<GeneratedStory | null>(null);
     const [audioCache, setAudioCache] = useState<Record<string, { url: string; contentSignature: string }>>({});
+    const [illustrationCache, setIllustrationCache] = useState<Record<string, { images: string[]; contentSignature: string }>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [hasLoadedRecentStories, setHasLoadedRecentStories] = useState(false);
@@ -170,6 +174,25 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
                 console.error('Error loading audio cache:', error);
             }
         }
+
+        const storedIllustrations = sessionStorage.getItem(ILLUSTRATION_CACHE_STORAGE_KEY);
+        if (storedIllustrations) {
+            try {
+                const parsed: Record<string, { images: string[]; contentSignature?: string }> = JSON.parse(storedIllustrations);
+                const normalizedEntries = Object.entries(parsed).reduce<Record<string, { images: string[]; contentSignature: string }>>((acc, [title, value]) => {
+                    if (value && Array.isArray(value.images)) {
+                        acc[title] = {
+                            images: value.images,
+                            contentSignature: value.contentSignature ?? '',
+                        };
+                    }
+                    return acc;
+                }, {});
+                setIllustrationCache(normalizedEntries);
+            } catch (error) {
+                console.error('Error loading illustration cache:', error);
+            }
+        }
     }, []);
 
     // Save data to localStorage whenever storyData changes
@@ -189,6 +212,14 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             console.error('Error saving audio cache:', error);
         }
     }, [audioCache]);
+
+    useEffect(() => {
+        try {
+            sessionStorage.setItem(ILLUSTRATION_CACHE_STORAGE_KEY, JSON.stringify(illustrationCache));
+        } catch (error) {
+            console.error('Error saving illustration cache:', error);
+        }
+    }, [illustrationCache]);
 
     // Add story to recent stories
     const addToRecentStories = useCallback((story: GeneratedStory) => {
@@ -210,7 +241,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         });
     }, []);
 
-    const buildAudioSignature = useCallback((content: string | null) => content ?? '', []);
+    const buildContentSignature = useCallback((content: string | null) => content ?? '', []);
 
     const getCachedAudioUrl = useCallback((title: string | null, content: string | null) => {
         if (!title) {
@@ -220,12 +251,12 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         if (!entry) {
             return null;
         }
-        const signature = buildAudioSignature(content);
+        const signature = buildContentSignature(content);
         if (entry.contentSignature !== signature) {
             return null;
         }
         return entry.url;
-    }, [audioCache, buildAudioSignature]);
+    }, [audioCache, buildContentSignature]);
 
     const cacheAudioForStory = useCallback((title: string | null, content: string | null, url: string | null) => {
         if (!title) {
@@ -237,14 +268,48 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             if (url) {
                 next[title] = {
                     url,
-                    contentSignature: buildAudioSignature(content),
+                    contentSignature: buildContentSignature(content),
                 };
             } else {
                 delete next[title];
             }
             return next;
         });
-    }, [buildAudioSignature]);
+    }, [buildContentSignature]);
+
+    const getCachedIllustrations = useCallback((title: string | null, content: string | null) => {
+        if (!title) {
+            return null;
+        }
+        const entry = illustrationCache[title];
+        if (!entry) {
+            return null;
+        }
+        const signature = buildContentSignature(content);
+        if (entry.contentSignature !== signature) {
+            return null;
+        }
+        return entry.images;
+    }, [illustrationCache, buildContentSignature]);
+
+    const cacheIllustrationsForStory = useCallback((title: string | null, content: string | null, images: string[] | null) => {
+        if (!title) {
+            return;
+        }
+
+        setIllustrationCache(prev => {
+            const next = { ...prev };
+            if (images && images.length) {
+                next[title] = {
+                    images,
+                    contentSignature: buildContentSignature(content),
+                };
+            } else {
+                delete next[title];
+            }
+            return next;
+        });
+    }, [buildContentSignature]);
 
     // Get latest story title
     const getLatestStoryTitle = useMemo(() => {
@@ -329,7 +394,9 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
             localStorage.removeItem('storyGenerationData');
             sessionStorage.removeItem('generatedStory'); // Clear generated story too
             sessionStorage.removeItem(AUDIO_CACHE_STORAGE_KEY);
+            sessionStorage.removeItem(ILLUSTRATION_CACHE_STORAGE_KEY);
             setAudioCache({});
+            setIllustrationCache({});
         };
     }, []);
     const selectRecentStory = useCallback((story: RecentStory) => {
@@ -380,6 +447,8 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         currentStory,
         getCachedAudioUrl,
         cacheAudioForStory,
+        getCachedIllustrations,
+        cacheIllustrationsForStory,
         updateChildInfo,
         updateStoryValues,
         updateStoryStyle,
@@ -392,7 +461,7 @@ export function StoryGenerationProvider({ children }: { children: ReactNode }) {
         selectRecentStory,
         isLoading,
         error,
-    }), [storyData, recentStories, currentStory, getCachedAudioUrl, cacheAudioForStory, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, updateCurrentStoryContent, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
+    }), [storyData, recentStories, currentStory, getCachedAudioUrl, cacheAudioForStory, getCachedIllustrations, cacheIllustrationsForStory, updateChildInfo, updateStoryValues, updateStoryStyle, updateCustomDescription, updateOutputFormat, updateCurrentStoryContent, resetStoryData, generateStory, getLatestStoryTitle, selectRecentStory, isLoading, error]);
 
     return (
         <StoryGenerationContext.Provider value={value}>
