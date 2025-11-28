@@ -55,6 +55,7 @@ body {
   --color-purple: var(--purple);
   --color-light-orange: var(--light-orange);
   --color-gray: var(--gray);
+  --color-light-gray: var(--light-gray);
 
 }
 
@@ -98,6 +99,7 @@ body {
   --purple: #6B5482;
   --light-orange: #CF5C5C;
   --gray: #464540;
+  --light-gray: #4645406B;
 }
 
 

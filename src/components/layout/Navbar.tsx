@@ -59,7 +59,7 @@ export default function Navbar() {
 
     return (
         <>
-            <nav className="hidden lg:flex min-h-screen w-64 bg-background border-r border-[#4645406B] shadow-2xl flex flex-col sticky top-0">
+            <nav className="hidden lg:flex min-h-screen w-64 bg-background border-r border-[--color-light-gray] shadow-2xl flex flex-col sticky top-0">
                 {/* Logo */}
                 <div className="pt-4 px-4 mb-2">
                     <Link href="/" className="flex items-center gap-3">
@@ -151,7 +151,7 @@ export default function Navbar() {
 
             {/* Mobile top navigation bar */}
             <nav className="md:hidden w-full">
-                <div className="fixed top-0 left-0 right-0 z-40 border-b border-[#E6DCD2] bg-background/95 backdrop-blur-md shadow-sm">
+                <div className="fixed top-0 left-0 right-0 z-40 border-b border-[--color-light-gray] bg-background/95 backdrop-blur-md shadow-sm">
                     <div className="mx-auto flex w-full max-w-screen-sm flex items-center justify-between px-6 py-4">
                         <Link href="/" className="flex items-center gap-3">
                             <Image src="/Main Logo.svg" alt="Hikaya Logo" width={40} height={40} className="mb-1" />
@@ -164,7 +164,7 @@ export default function Navbar() {
                             aria-label="Open navigation menu"
                             aria-expanded={open}
                             onClick={() => setOpen(true)}
-                            className="h-14 w-14 text-dark-red"
+                            className="h-14 w-14 text-dark-red flex items-center justify-center"
                         >
                             <Image src="/icons/menu-icon.svg" alt="Menu icon" width={20} height={20} />
 
@@ -174,7 +174,7 @@ export default function Navbar() {
             </nav>
 
             {/* Compact sidebar for medium screens */}
-            <nav className="hidden md:flex lg:hidden flex-col items-center justify-between w-16 bg-background border-r border-[#4645406B] shadow-2xl min-h-screen py-6 sticky top-0">
+            <nav className="hidden md:flex lg:hidden flex-col items-center justify-between w-16 bg-background border-r border-[--color-light-gray] shadow-2xl min-h-screen py-6 sticky top-0">
                 <button
                     type="button"
                     onClick={() => setOpen(true)}
@@ -223,7 +223,7 @@ export default function Navbar() {
             </nav>
 
             <Sheet open={open} onOpenChange={setOpen}>
-                <SheetContent side="left" className="w-64 flex h-full max-h-screen flex-col">
+                <SheetContent side="left" className="w-[80vw] sm:w-72 md:w-80 flex h-full max-h-screen flex-col">
                     <span className="sr-only">
                         <SheetTitle>Hikaya</SheetTitle>
                         <SheetDescription>Navigation menu</SheetDescription>
@@ -237,7 +237,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="flex-1 overflow-y-auto">
-                        <div className="flex flex-col gap-6 justify-between p-4">
+                        <div className="flex flex-col gap-6 justify-between h-full p-4">
                             <div>
                                 <div className="flex items-center pb-2">
                                     <Image src="/icons/generate-icon.svg" alt="Generate Icon" width={14} height={14} />
