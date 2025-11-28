@@ -29,7 +29,6 @@ npm install
 | `npm run dev` | Start Next.js dev server at `http://localhost:3000` |
 | `npm run build` | Create production build ( `.next/` )          |
 | `npm run start` | Serve production build                        |
-| `npm run lint` | Run ESLint with the Next.js config             |
 
 ---
 
@@ -38,12 +37,12 @@ npm install
 	```bash
 	npm install
 	```
-2. **(Optional) Configure environment variables** – if your backend/API URLs differ from the defaults in `src/app/generate/actions.ts`, duplicate `.env.example` (if present) and update the values, or edit the action directly.
+Reusable UI primitives built on Radix UI and Tailwind CSS 4
 3. **Start the dev server**
 	```bash
 	npm run dev
 	```
-4. Open `http://localhost:3000` to start generating stories.
+4. Open `http://localhost:3000`.
 
 ---
 
@@ -86,8 +85,9 @@ npm install
 ---
 
 ## Development Notes
-- **Story data flow:** `StoryGenerationContext` centralizes wizard and preview data; server actions in `src/app/generate/actions.ts` call the Render backend for text/audio.
-- **Styling:** Tailwind CSS v4 (framework mode) with design tokens declared in `src/app/globals.css`.
+- **Story data flow:** `StoryGenerationContext` centralizes wizard state, edit mode, and recent stories. Server actions in `src/app/generate/actions.ts` call the Render backend for text/audio.
+- **Styling:** Tailwind CSS v4 (framework mode) plus custom CSS variables in `src/app/globals.css` for the hikaya palette.
 - **Audio:** `AudioPlayer` lazily requests audio via the `generateAudioAction`, converts the streamed MP3 to a data URL, and feeds the `<audio>` element.
+- **Responsive layout:** Navbar swaps to a fixed mobile menu, wizard pages cap vertical scroll on phones, and the preview carousel shows a single card with visible prev/next controls on small screens.
 
 For questions or contributions, feel free to open issues or PRs in this repository. Happy storytelling! 📚✨

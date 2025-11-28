@@ -9,15 +9,17 @@ import { generateAudioAction } from "@/app/generate/actions";
 interface AudioPlayerProps {
     storyTitle?: string;
     storyContent?: string;
+    cachedAudioUrl?: string | null;
+    onAudioCached?: (url: string | null) => void;
 }
 
-export function AudioPlayer({ storyTitle, storyContent }: AudioPlayerProps) {
+export function AudioPlayer({ storyTitle, storyContent, cachedAudioUrl = null, onAudioCached }: AudioPlayerProps) {
     const audioRef = useRef<HTMLAudioElement | null>(null);
 
     const [isPlaying, setIsPlaying] = useState(false);
     const [duration, setDuration] = useState(0);
     const [currentTime, setCurrentTime] = useState(0);
-    const [audioUrl, setAudioUrl] = useState<string | null>(null);
+    const [audioUrl, setAudioUrl] = useState<string | null>(cachedAudioUrl);
     const [isGenerating, setIsGenerating] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -79,6 +81,7 @@ export function AudioPlayer({ storyTitle, storyContent }: AudioPlayerProps) {
             }
 
             setAudioUrl(result.audioUrl);
+            onAudioCached?.(result.audioUrl);
             const audio = audioRef.current;
             if (audio) {
                 audio.src = result.audioUrl;
@@ -90,7 +93,7 @@ export function AudioPlayer({ storyTitle, storyContent }: AudioPlayerProps) {
         } finally {
             setIsGenerating(false);
         }
-    }, [audioUrl, isGenerating, storyTitle, storyContent]);
+    }, [audioUrl, isGenerating, onAudioCached, storyContent, storyTitle]);
 
     const togglePlay = useCallback(async () => {
         const audio = audioRef.current;
@@ -131,6 +134,23 @@ export function AudioPlayer({ storyTitle, storyContent }: AudioPlayerProps) {
     };
 
     const disableControls = isGenerating || !storyTitle || !storyContent;
+
+    useEffect(() => {
+        if (cachedAudioUrl) {
+            setAudioUrl(cachedAudioUrl);
+            const audio = audioRef.current;
+            if (audio) {
+                audio.src = cachedAudioUrl;
+            }
+        } else if (cachedAudioUrl === null) {
+            const audio = audioRef.current;
+            if (audio) {
+                audio.removeAttribute("src");
+                audio.load();
+            }
+            setAudioUrl(null);
+        }
+    }, [cachedAudioUrl]);
 
     return (
         <div className="w-full px-3 py-2 rounded-full border bg-dark-red shadow-sm space-y-1.5">

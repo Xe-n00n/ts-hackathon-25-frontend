@@ -3,30 +3,37 @@ import { useRouter } from "next/navigation";
 import { baloo2 } from "@/lib/fonts";
 import { Button } from "@/components/ui/button";
 
-export default function StoryStyleButtons() {
+interface ChildInfoButtonsProps {
+    isFormValid?: boolean;
+    variant: string;
+    previousRoute: string;
+    nextRoute: string;
+}
+
+export default function FormButtons({ isFormValid = true, variant, previousRoute, nextRoute }: ChildInfoButtonsProps) {
     const router = useRouter();
 
     const handlePrevious = () => {
-        router.push('/generate/select-values');
+        router.push(previousRoute);
     };
 
     const handleNext = () => {
-        router.push('/generate/custom-description');
+        router.push(nextRoute);
     };
-
     return (
-        <div className="flex items-center gap-4 mr-16">
+        <div className="flex items-center gap-4 mr-0 md:mr-16">
             <Button
-                variant="yellowOutline"
+                variant={`${variant}Outline`}
                 className={`${baloo2.className}`}
                 onClick={handlePrevious}
             >
                 Previous
             </Button>
             <Button
-                variant="yellow"
+                variant={variant}
                 className={`${baloo2.className}`}
                 onClick={handleNext}
+                disabled={!isFormValid}
             >
                 Next
             </Button>

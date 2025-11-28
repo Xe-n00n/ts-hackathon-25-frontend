@@ -4,10 +4,10 @@ import Image from "next/image";
 import { baloo2 } from "@/lib/fonts";
 import { Stepper } from "@/components/ui/stepper";
 import { Label } from "@/components/ui/label";
-import SelectValuesButtons from "@/components/select-values-buttons";
 import { TagInput } from "@/components/tag-input";
 import { Textarea } from "@/components/ui/textarea";
 import { useStoryGeneration } from "@/lib/StoryGenerationContext";
+import FormButtons from "@/components/buttons/form-buttons";
 
 interface ValidationErrors {
     goal?: string;
@@ -41,7 +41,7 @@ export default function SelectValuesClient() {
     const isFormValid = () => storyData.storyValues.goal.trim() !== '';
 
     return (
-        <div className={`h-screen max-h-screen overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
+        <div className={`h-screen max-h-screen overflow-auto md:overflow-hidden container mx-auto pt-4 pb-2 flex flex-col ${baloo2.className}`}>
             <p className={`flex justify-start w-full text-xl font-bold px-4 ${baloo2.className}`}>
                 <span className="text-orange">Step 2: </span>&nbsp;Select Values
             </p>
@@ -73,7 +73,7 @@ export default function SelectValuesClient() {
                 </div>
             </div>
 
-            <div className="flex justify-between items-center ">
+            <div className="flex flex-col-reverse gap-4 mt-6 md:flex-row justify-between items-center">
                 <Image
                     src="/icons/rabbit-icon.svg"
                     alt="Rabbit Icon"
@@ -81,7 +81,7 @@ export default function SelectValuesClient() {
                     height={150}
                     className="self-center ml-4"
                 />
-                <SelectValuesButtons isFormValid={isFormValid()} />
+                <FormButtons variant="orange" previousRoute="/generate/child-info" nextRoute="/generate/story-style" isFormValid={isFormValid()} />
             </div>
         </div>
     );
