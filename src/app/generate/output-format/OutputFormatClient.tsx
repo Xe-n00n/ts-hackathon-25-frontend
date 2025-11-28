@@ -17,23 +17,29 @@ export default function OutputFormatClient() {
         { value: "text-only", label: "Text Only", emoji: "📄" },
         { value: "illustrated-digital-book", label: "Illustrated Digital Book", emoji: "🖼️" },
         { value: "audio-version", label: "Audio Version", emoji: "🎧" },
-        { value: "printable-pdf", label: "Printable PDF", emoji: " 🖨️" },
+        {
+            value: "printable-pdf",
+            label: "Printable PDF",
+            emoji: " 🖨️",
+            disabled: true,
+            helperText: "Coming soon",
+        },
     ];
 
     const handleFormatChange = (value: string | string[]) => {
-        if (!Array.isArray(value)) {
-            return;
-        }
-        if (value.length === 0) {
-            return;
+        let nextValue: OutputFormatOption | null = null;
+
+        if (Array.isArray(value)) {
+            nextValue = value[0] as OutputFormatOption | undefined ?? null;
+        } else if (typeof value === "string") {
+            nextValue = value as OutputFormatOption;
         }
 
-        const uniqueValues = Array.from(new Set(value)) as OutputFormatOption[];
-        if (!uniqueValues.includes(REQUIRED_TEXT_OPTION)) {
-            uniqueValues.unshift(REQUIRED_TEXT_OPTION);
+        if (!nextValue || nextValue === "printable-pdf") {
+            nextValue = REQUIRED_TEXT_OPTION;
         }
 
-        updateOutputFormat(uniqueValues);
+        updateOutputFormat([nextValue]);
     };
 
     return (
@@ -50,9 +56,8 @@ export default function OutputFormatClient() {
                     color="dark-red"
                     options={cardOptions}
                     className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-12 max-w-4xl mx-auto justify-items-center"
-                    value={storyData.outputFormat}
+                    value={storyData.outputFormat[0]}
                     onChange={handleFormatChange}
-                    multiple
                 />
             </div>
 

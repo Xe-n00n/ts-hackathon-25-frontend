@@ -85,7 +85,14 @@ export function AudioPlayer({ storyTitle, storyContent, cachedAudioUrl = null, o
             const audio = audioRef.current;
             if (audio) {
                 audio.src = result.audioUrl;
-                await audio.load();
+                await new Promise<void>((resolve) => {
+                    const handleCanPlay = () => {
+                        audio.removeEventListener("canplay", handleCanPlay);
+                        resolve();
+                    };
+                    audio.addEventListener("canplay", handleCanPlay, { once: true });
+                    audio.load();
+                });
             }
         } catch (error) {
             const message = error instanceof Error ? error.message : "Audio generation failed";
@@ -111,10 +118,12 @@ export function AudioPlayer({ storyTitle, storyContent, cachedAudioUrl = null, o
             audio.pause();
             setIsPlaying(false);
         } else {
-            await audio.play().catch(error => {
+            try {
+                await audio.play();
+                setIsPlaying(true);
+            } catch (error) {
                 setErrorMessage(error instanceof Error ? error.message : "Unable to play audio");
-            });
-            setIsPlaying(true);
+            }
         }
     }, [audioUrl, ensureAudioReady, isPlaying]);
 
