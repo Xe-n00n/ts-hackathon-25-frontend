@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { baloo2 } from "@/lib/fonts";
 import {
     Carousel,
@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Download, Loader2 } from "lucide-react";
 import { jsPDF } from "jspdf";
+import Image from "next/image";
 
 const splitStoryIntoPages = (content: string): string[] => {
     return content
@@ -60,26 +61,88 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
     const [isAudioExporting, setIsAudioExporting] = useState(false);
     const { getCachedAudioUrl, cacheAudioForStory } = useStoryGeneration();
     const cachedAudioUrl = story ? getCachedAudioUrl(story.title, story.content) : null;
+    const isImage = true;
+    const [isSmallOrMedium, setIsSmallOrMedium] = useState(() => {
+        if (typeof window === "undefined") {
+            return true;
+        }
+        return window.matchMedia("(max-width: 1023px)").matches;
+    });
 
-    const pages = useMemo(() => {
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+        const mediaQuery = window.matchMedia("(max-width: 1023px)");
+        const handler = (event: MediaQueryListEvent) => {
+            setIsSmallOrMedium(event.matches);
+        };
+        setIsSmallOrMedium(mediaQuery.matches);
+        mediaQuery.addEventListener("change", handler);
+        return () => {
+            mediaQuery.removeEventListener("change", handler);
+        };
+    }, []);
+
+    const shouldSplitPages = isImage && isSmallOrMedium;
+    const showSideImage = isImage && !shouldSplitPages;
+
+    const basePages = useMemo(() => {
         return pageContents.map((pageContent, index) => ({
             pageContent,
-            pageNumber: index + 1,
+            baseIndex: index,
         }));
     }, [pageContents]);
 
-    const currentPage = pages.length
-        ? pages[Math.min(selectedIndex, pages.length - 1)]
-        : { pageContent: "Loading story...", pageNumber: 1 };
+    const displayPages = useMemo(() => {
+        if (!basePages.length) {
+            return [];
+        }
 
-    const hasEditablePage = Boolean(story && pages.length);
+        const applySplit = shouldSplitPages;
+
+        if (!applySplit) {
+            return basePages.map((page, index) => ({
+                kind: "text" as const,
+                pageNumber: index + 1,
+                baseIndex: page.baseIndex,
+                preview: page.pageContent,
+            }));
+        }
+
+        return basePages.flatMap((page, index) => ([
+            {
+                kind: "text" as const,
+                pageNumber: index * 2 + 1,
+                baseIndex: page.baseIndex,
+                preview: page.pageContent,
+            },
+            {
+                kind: "image" as const,
+                pageNumber: index * 2 + 2,
+                baseIndex: page.baseIndex,
+                preview: page.pageContent,
+            },
+        ]));
+    }, [basePages, shouldSplitPages]);
+
+    const currentDisplayPage = displayPages.length
+        ? displayPages[Math.min(selectedIndex, displayPages.length - 1)]
+        : null;
+
+    const currentPageContent = currentDisplayPage
+        ? pageContents[currentDisplayPage.baseIndex] ?? ""
+        : "Loading story...";
+
+    const hasEditablePage = Boolean(story && basePages.length);
+    const isCurrentImagePage = shouldSplitPages && currentDisplayPage?.kind === "image";
 
     const handlePageSelect = useCallback((index: number) => {
         setSelectedIndex(index);
     }, []);
 
     const handlePageTextChange = useCallback((value: string) => {
-        if (!isEditing) {
+        if (!isEditing || !currentDisplayPage || currentDisplayPage.kind !== "text") {
             return;
         }
 
@@ -89,12 +152,12 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
             }
 
             const next = [...prev];
-            const boundedIndex = Math.min(selectedIndex, prev.length - 1);
-            next[boundedIndex] = value;
+            const activeBaseIndex = currentDisplayPage?.baseIndex ?? 0;
+            next[activeBaseIndex] = value;
             return next;
         });
         setHasUnsavedChanges(true);
-    }, [isEditing, selectedIndex]);
+    }, [isEditing, currentDisplayPage]);
 
     const handleSaveChanges = useCallback(() => {
         if (!story || !pageContents.length) {
@@ -118,23 +181,24 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
             if (!resetPages.length) {
                 return 0;
             }
-            return Math.min(prev, resetPages.length - 1);
+            const maxIndex = shouldSplitPages ? resetPages.length * 2 - 1 : resetPages.length - 1;
+            return Math.min(prev, Math.max(0, maxIndex));
         });
         setHasUnsavedChanges(false);
         setIsEditing(false);
-    }, [story]);
+    }, [story, shouldSplitPages]);
 
     const handleStartEditing = useCallback(() => {
-        if (!hasEditablePage) {
+        if (!hasEditablePage || isCurrentImagePage) {
             return;
         }
         setIsEditing(true);
-    }, [hasEditablePage]);
+    }, [hasEditablePage, isCurrentImagePage]);
 
     const carouselItems = useMemo(() => {
-        if (!pages.length) return null;
+        if (!displayPages.length) return null;
 
-        return pages.map((page, index) => (
+        return displayPages.map((page, index) => (
             <CarouselItem key={index} className="flex justify-start items-center basis-1/1 lg:basis-1/5 max-w-[12rem]">
                 <div
                     className={`relative bg-white rounded-xl p-2.5 w-48 h-32 flex flex-col justify-between cursor-pointer transition shadow-xl border-2
@@ -142,9 +206,15 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                     onClick={() => handlePageSelect(index)}
                 >
                     <div className="text-xs overflow-hidden flex-1">
-                        <p className="break-words whitespace-pre-wrap leading-tight">
-                            {page.pageContent}
-                        </p>
+                        {page.kind === "image" ? (
+                            <div className="w-full h-full flex items-center justify-center bg-neutral-100 rounded-lg">
+                                <span className="text-dark-red font-semibold">Image</span>
+                            </div>
+                        ) : (
+                            <p className="break-words whitespace-pre-wrap leading-tight text-ellipsis overflow-hidden h-full">
+                                {page.preview}
+                            </p>
+                        )}
                     </div>
                     <div className="absolute bottom-2 right-2 text-dark-red text-sm font-semibold bg-white/70 px-1 py-0.5 rounded">
                         {page.pageNumber}
@@ -152,7 +222,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                 </div>
             </CarouselItem>
         ));
-    }, [pages, selectedIndex, handlePageSelect]);
+    }, [displayPages, selectedIndex, handlePageSelect]);
 
     const storyTitle = story?.title || "Hikaaya Story";
     const showAudioPlayer = Boolean(
@@ -321,19 +391,42 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                         </DropdownMenu>
                     )}
                 </div>
-                <div className="flex flex-col items-center justify-between bg-white w-2/4 mx-auto h-3/4 md:h-1/2 w-3/4 shadow-xl/20 p-4 rounded-xl text-xl">
-                    <div className="flex-1 w-full">
-                        <Textarea
-                            className="w-full h-full resize-none border border-dark-red/30 rounded-lg p-4 text-xl md:text-2xl leading-relaxed break-words whitespace-pre-wrap "
-                            value={currentPage.pageContent}
-                            onChange={(event) => handlePageTextChange(event.target.value)}
-                            readOnly={!hasEditablePage || !isEditing}
-                            aria-readonly={!hasEditablePage || !isEditing}
-                        />
+                <div className="flex flex-col bg-white w-2/4 mx-auto h-3/4 md:h-1/2 lg:h-[34rem] w-3/4 shadow-xl/20 p-4 rounded-xl text-xl">
+                    <div className={`flex w-full flex-1 ${showSideImage ? "flex-col md:flex-row gap-4" : ""}`}>
+                        {isCurrentImagePage ? (
+                            <div className="w-full h-full flex items-center justify-center">
+                                <Image
+                                    src="/scene_0_0.png"
+                                    width={480}
+                                    height={360}
+                                    alt="Story illustration"
+                                    className="w-full h-full max-h-[360px] object-cover rounded-xl border border-dark-red/20"
+                                />
+                            </div>
+                        ) : (
+                            <Textarea
+                                className="flex-1 w-full h-full resize-none border border-dark-red/30 rounded-lg p-4 text-xl md:text-2xl leading-relaxed break-words whitespace-pre-wrap"
+                                value={currentPageContent}
+                                onChange={(event) => handlePageTextChange(event.target.value)}
+                                readOnly={!hasEditablePage || !isEditing}
+                                aria-readonly={!hasEditablePage || !isEditing}
+                            />
+                        )}
+                        {showSideImage && (
+                            <div className="hidden md:flex flex-1 flex-shrink-0 items-center justify-center">
+                                <Image
+                                    src="/scene_0_0.png"
+                                    width={420}
+                                    height={420}
+                                    alt="Story illustration"
+                                    className="w-full h-full max-h-[340px] object-cover rounded-xl border border-dark-red/20"
+                                />
+                            </div>
+                        )}
                     </div>
                     <div className="flex w-full items-center justify-between mt-4">
                         <p className="text-2xl text-dark-red font-bold">
-                            {currentPage.pageNumber}
+                            {currentDisplayPage?.pageNumber ?? 1}
                         </p>
                         <div className="flex gap-3">
                             {!isEditing ? (
@@ -341,7 +434,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
                                     variant="darkRed"
                                     size="sm"
                                     onClick={handleStartEditing}
-                                    disabled={!hasEditablePage}
+                                    disabled={!hasEditablePage || isCurrentImagePage}
                                 >
                                     Edit
                                 </Button>
