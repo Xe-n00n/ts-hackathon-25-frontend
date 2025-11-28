@@ -154,7 +154,7 @@ function StoryViewer({ story, onSaveContent }: StoryViewerProps) {
         ));
     }, [pages, selectedIndex, handlePageSelect]);
 
-    const storyTitle = story?.title;
+    const storyTitle = story?.title || "Hikaaya Story";
     const showAudioPlayer = Boolean(
         story &&
         Array.isArray(story.format) &&

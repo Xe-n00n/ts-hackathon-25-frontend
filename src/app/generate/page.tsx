@@ -38,7 +38,7 @@ export default function Generate() {
                             alt="Bear Icon"
                             width={40}
                             height={40}
-                            className="hidden md:block absolute -top-6 left-1/2 -translate-x-1/2 w-10 h-auto"
+                            className="hidden md:block absolute -top-6 left-12 w-10 h-auto"
                         />
                     </div>
                 </h1>
